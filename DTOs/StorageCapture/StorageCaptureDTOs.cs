@@ -44,7 +44,7 @@ namespace AvyyanBackend.DTOs.StorageCapture
 		[Required]
 		[MaxLength(200)]
 		public string CustomerName { get; set; } = string.Empty;
-		
+
 		public bool IsDispatched { get; set; } = false;
 	}
 
@@ -147,7 +147,7 @@ namespace AvyyanBackend.DTOs.StorageCapture
 		public int Gauge { get; set; }
 		public string FabricType { get; set; } = string.Empty;
 		public string SlitLine { get; set; } = string.Empty;
-		public decimal StitchLength { get; set; }
+		public string StitchLength { get; set; }
 		public decimal Efficiency { get; set; }
 		public string Composition { get; set; } = string.Empty;
 		public decimal TotalProductionTime { get; set; }

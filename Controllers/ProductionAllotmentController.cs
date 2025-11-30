@@ -259,7 +259,7 @@ namespace AvyyanBackend.Controllers
 						.Replace("<ROLLNO>", rollNumber.ToString())
 						.Replace("<YCOUNT>", machineAllocation.ProductionAllotment.YarnCount?.Trim() ?? "")
 						.Replace("<DIAGG>", $"{machineAllocation.ProductionAllotment.Diameter} X {machineAllocation.ProductionAllotment.Gauge}")
-						.Replace("<STICHLEN>", machineAllocation.ProductionAllotment.StitchLength.ToString("F2"))
+						.Replace("<STICHLEN>", machineAllocation.ProductionAllotment.StitchLength.ToString())
 						.Replace("<FEBTYP>", machineAllocation.ProductionAllotment.FabricType?.Trim() ?? "")
 						.Replace("<COMP>", machineAllocation.ProductionAllotment.Composition?.Trim() ?? "");
 
@@ -324,7 +324,7 @@ namespace AvyyanBackend.Controllers
 							.Replace("<ROLLNO1>", rollNo1.ToString())
 							.Replace("<YCOUNT1>", pa.YarnCount?.Trim() ?? "")
 							.Replace("<DIAGG1>", $"{pa.Diameter} X {pa.Gauge}")
-							.Replace("<STICHLEN1>", pa.StitchLength.ToString("F2"))
+							.Replace("<STICHLEN1>", pa.StitchLength.ToString())
 							.Replace("<FEBTYP1>", pa.FabricType?.Trim() ?? "")
 							.Replace("<COMP1>", pa.Composition?.Trim() ?? "")
 
@@ -334,7 +334,7 @@ namespace AvyyanBackend.Controllers
 							.Replace("<ROLLNO2>", rollNo2.ToString())
 							.Replace("<YCOUNT2>", pa.YarnCount?.Trim() ?? "")
 							.Replace("<DIAGG2>", $"{pa.Diameter} X {pa.Gauge}")
-							.Replace("<STICHLEN2>", pa.StitchLength.ToString("F2"))
+							.Replace("<STICHLEN2>", pa.StitchLength.ToString())
 							.Replace("<FEBTYP2>", pa.FabricType?.Trim() ?? "")
 							.Replace("<COMP2>", pa.Composition?.Trim() ?? "");
 
@@ -352,7 +352,7 @@ namespace AvyyanBackend.Controllers
 							.Replace("<ROLLNO>", rollNo.ToString())
 							.Replace("<YCOUNT>", pa.YarnCount?.Trim() ?? "")
 							.Replace("<DIAGG>", $"{pa.Diameter} X {pa.Gauge}")
-							.Replace("<STICHLEN>", pa.StitchLength.ToString("F2"))
+							.Replace("<STICHLEN>", pa.StitchLength.ToString())
 							.Replace("<FEBTYP>", pa.FabricType?.Trim() ?? "")
 							.Replace("<COMP>", pa.Composition?.Trim() ?? "");
 
@@ -432,7 +432,7 @@ namespace AvyyanBackend.Controllers
 					.Replace("<MCCODE>", rollConfirmation.MachineName.Trim())
 					.Replace("<YCOUNT>", productionAllotment.YarnCount?.Trim() ?? "")
 					.Replace("<DIAGG>", $"{productionAllotment.Diameter} X {productionAllotment.Gauge}")
-					.Replace("<STICHLEN>", productionAllotment.StitchLength.ToString("F2"))
+					.Replace("<STICHLEN>", productionAllotment.StitchLength.ToString())
 					.Replace("<FGSM>", rollConfirmation.GreyGsm.ToString("F2"))
 					.Replace("<WIDTH>", rollConfirmation.GreyWidth.ToString("F2"))
 					.Replace("<SLITLINE>", productionAllotment.SlitLine?.Trim() ?? "")

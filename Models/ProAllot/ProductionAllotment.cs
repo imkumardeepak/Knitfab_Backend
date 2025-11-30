@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AvyyanBackend.Models.ProAllot
@@ -36,11 +36,11 @@ namespace AvyyanBackend.Models.ProAllot
 		[MaxLength(100)]
 		public string FabricType { get; set; }
 
-		[MaxLength(50)]
+		[MaxLength(200)]
 		public string SlitLine { get; set; }
 
-		[Column(TypeName = "decimal(18,3)")]
-		public decimal StitchLength { get; set; }
+		[MaxLength(200)]
+		public string StitchLength { get; set; }
 
 		[Column(TypeName = "decimal(5,2)")]
 		public decimal Efficiency { get; set; }
@@ -51,46 +51,46 @@ namespace AvyyanBackend.Models.ProAllot
 		[Column(TypeName = "decimal(18,2)")]
 		public decimal TotalProductionTime { get; set; } // In days
 
-        [MaxLength(50)]
-        public string YarnLotNo { get; set; }
+		[MaxLength(50)]
+		public string YarnLotNo { get; set; }
 
-        [MaxLength(50)]
-        public string Counter { get; set; }
+		[MaxLength(50)]
+		public string Counter { get; set; }
 
-        [MaxLength(50)]
-        public string ColourCode { get; set; }
+		[MaxLength(50)]
+		public string ColourCode { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal? ReqGreyGsm { get; set; }
+		[Column(TypeName = "decimal(18,2)")]
+		public decimal? ReqGreyGsm { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal? ReqGreyWidth { get; set; }
+		[Column(TypeName = "decimal(18,2)")]
+		public decimal? ReqGreyWidth { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal? ReqFinishGsm { get; set; }
+		[Column(TypeName = "decimal(18,2)")]
+		public decimal? ReqFinishGsm { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal? ReqFinishWidth { get; set; }
+		[Column(TypeName = "decimal(18,2)")]
+		public decimal? ReqFinishWidth { get; set; }
 
-        [MaxLength(200)]
-        public string PartyName { get; set; }
+		[MaxLength(200)]
+		public string PartyName { get; set; }
 
-        // Packaging Details
-        [Column(TypeName = "decimal(18,3)")]
-        public decimal TubeWeight { get; set; }
+		// Packaging Details
+		[Column(TypeName = "decimal(18,3)")]
+		public decimal TubeWeight { get; set; }
 
-        [Column(TypeName = "decimal(18,3)")]
-        public decimal? ShrinkRapWeight { get; set; }
+		[Column(TypeName = "decimal(18,3)")]
+		public decimal? ShrinkRapWeight { get; set; }
 
-        [Column(TypeName = "decimal(18,3)")]
-        public decimal? TotalWeight { get; set; }
+		[Column(TypeName = "decimal(18,3)")]
+		public decimal? TotalWeight { get; set; }
 
-        [MaxLength(100)]
-        public string TapeColor { get; set; }
+		[MaxLength(100)]
+		public string TapeColor { get; set; }
 
-        public string? SerialNo { get; set; } // Format: "0001", "0002", etc."
+		public string? SerialNo { get; set; } // Format: "0001", "0002", etc."
 
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+		public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
 		// Navigation property
 		public virtual ICollection<MachineAllocation> MachineAllocations { get; set; }
@@ -126,10 +126,10 @@ namespace AvyyanBackend.Models.ProAllot
 		[Column(TypeName = "decimal(18,2)")]
 		public decimal EstimatedProductionTime { get; set; } // In days
 
-        // Navigation property
-        public virtual ProductionAllotment ProductionAllotment { get; set; }
-        
-        // Navigation property for roll assignments
-        public virtual ICollection<RollAssignment> RollAssignments { get; set; } = new List<RollAssignment>();
-    }
+		// Navigation property
+		public virtual ProductionAllotment ProductionAllotment { get; set; }
+
+		// Navigation property for roll assignments
+		public virtual ICollection<RollAssignment> RollAssignments { get; set; } = new List<RollAssignment>();
+	}
 }
