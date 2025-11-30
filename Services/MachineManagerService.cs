@@ -83,7 +83,7 @@ namespace AvyyanBackend.Services
             }
 
             _mapper.Map(updateMachineDto, machine);
-            machine.UpdatedAt = DateTime.Now;
+            machine.UpdatedAt = DateTime.UtcNow;
 
             _machineRepository.Update(machine);
             await _unitOfWork.SaveChangesAsync();

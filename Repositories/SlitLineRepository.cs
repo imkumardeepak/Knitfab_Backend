@@ -44,7 +44,7 @@ namespace AvyyanBackend.Repositories
             existingSlitLine.SlitLine = slitLine.SlitLine;
             existingSlitLine.SlitLineCode = slitLine.SlitLineCode;
             existingSlitLine.IsActive = slitLine.IsActive;
-            existingSlitLine.UpdatedAt = DateTime.Now;
+            existingSlitLine.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return existingSlitLine;
@@ -58,7 +58,7 @@ namespace AvyyanBackend.Repositories
 
             // Soft delete
             slitLine.IsActive = false;
-            slitLine.UpdatedAt = DateTime.Now;
+            slitLine.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return true;

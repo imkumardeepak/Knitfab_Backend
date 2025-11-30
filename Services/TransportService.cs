@@ -83,7 +83,7 @@ namespace AvyyanBackend.Services
             }
 
             _mapper.Map(updateTransportDto, transport);
-            transport.UpdatedAt = DateTime.Now;
+            transport.UpdatedAt = DateTime.UtcNow;
 
             _transportRepository.Update(transport);
             await _unitOfWork.SaveChangesAsync();

@@ -115,7 +115,7 @@ namespace AvyyanBackend.Services
 
 			// Update main sales order properties
 			_mapper.Map(updateSalesOrderDto, salesOrder);
-			salesOrder.UpdatedAt = DateTime.Now;
+			salesOrder.UpdatedAt = DateTime.UtcNow;
 
 			// Update items
 			UpdateSalesOrderItems(salesOrder, updateSalesOrderDto.Items);
@@ -208,8 +208,8 @@ namespace AvyyanBackend.Services
 			}
 
 			salesOrder.ProcessFlag = 1;
-			salesOrder.ProcessDate = DateTime.Now;
-			salesOrder.UpdatedAt = DateTime.Now;
+			salesOrder.ProcessDate = DateTime.UtcNow;
+			salesOrder.UpdatedAt = DateTime.UtcNow;
 
 			_salesOrderRepository.Update(salesOrder);
 			await _unitOfWork.SaveChangesAsync();
@@ -241,16 +241,16 @@ namespace AvyyanBackend.Services
 
 			// Update the item's process flag
 			salesOrderItem.ProcessFlag = 1;
-			salesOrderItem.ProcessDate = DateTime.Now;
+			salesOrderItem.ProcessDate = DateTime.UtcNow;
 
 			// Check if all items are processed, then mark the entire order as processed
 			if (salesOrder.Items.All(item => item.ProcessFlag == 1))
 			{
 				salesOrder.ProcessFlag = 1;
-				salesOrder.ProcessDate = DateTime.Now;
+				salesOrder.ProcessDate = DateTime.UtcNow;
 			}
 
-			salesOrder.UpdatedAt = DateTime.Now;
+			salesOrder.UpdatedAt = DateTime.UtcNow;
 
 			_salesOrderRepository.Update(salesOrder);
 			await _unitOfWork.SaveChangesAsync();

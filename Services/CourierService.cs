@@ -83,7 +83,7 @@ namespace AvyyanBackend.Services
             }
 
             _mapper.Map(updateCourierDto, courier);
-            courier.UpdatedAt = DateTime.Now;
+            courier.UpdatedAt = DateTime.UtcNow;
 
             _courierRepository.Update(courier);
             await _unitOfWork.SaveChangesAsync();

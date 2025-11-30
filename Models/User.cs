@@ -31,7 +31,7 @@ namespace AvyyanBackend.Models
         public string? PhoneNumber { get; set; }
 
 		[Column(TypeName = "timestamp without time zone")]
-		public DateTime? LastLoginAt { get; set; }=DateTime.Now;
+		public DateTime? LastLoginAt { get; set; }=DateTime.UtcNow;
 
     }
 }

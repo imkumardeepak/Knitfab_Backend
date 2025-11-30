@@ -137,7 +137,7 @@ namespace AvyyanBackend.Services
 
             // Update main sales order properties
             _mapper.Map(updateSalesOrderWebDto, salesOrderWeb);
-            salesOrderWeb.UpdatedAt = DateTime.Now;
+            salesOrderWeb.UpdatedAt = DateTime.UtcNow;
 
             // Update items
             UpdateSalesOrderWebItems(salesOrderWeb, updateSalesOrderWebDto.Items);
@@ -301,8 +301,8 @@ namespace AvyyanBackend.Services
         public string GenerateVoucherNumber(bool isJobWork, string buyerName)
         {
             // Get current financial year (e.g., 24-25)
-            var currentYear = DateTime.Now.Year;
-            var currentMonth = DateTime.Now.Month;
+            var currentYear = DateTime.UtcNow.Year;
+            var currentMonth = DateTime.UtcNow.Month;
 
             // Financial year logic: April to March
             int financialYearStart, financialYearEnd;

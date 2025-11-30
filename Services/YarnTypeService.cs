@@ -84,7 +84,7 @@ namespace AvyyanBackend.Services
             }
 
             _mapper.Map(updateYarnTypeDto, yarnType);
-            yarnType.UpdatedAt = DateTime.Now;
+            yarnType.UpdatedAt = DateTime.UtcNow;
 
             _yarnTypeRepository.Update(yarnType);
             await _unitOfWork.SaveChangesAsync();

@@ -19,7 +19,7 @@ namespace AvyyanBackend.Models
         [MaxLength(50)]
         public string VoucherNumber { get; set; } = string.Empty;
 
-        public DateTime OrderDate { get; set; } = DateTime.Now;
+        public DateTime OrderDate { get; set; } = DateTime.UtcNow;
 
         [MaxLength(50)]
         public string TermsOfPayment { get; set; } = string.Empty;
@@ -109,11 +109,11 @@ namespace AvyyanBackend.Models
 
         // Audit fields
         [Column(TypeName = "timestamp without time zone")]
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string CreatedBy { get; set; } = string.Empty;
 
         [Column(TypeName = "timestamp without time zone")]
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         public string UpdatedBy { get; set; } = string.Empty;
 
         // Navigation property for items

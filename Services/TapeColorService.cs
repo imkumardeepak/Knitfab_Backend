@@ -81,7 +81,7 @@ namespace AvyyanBackend.Services
             }
 
             _mapper.Map(updateTapeColorDto, tapeColor);
-            tapeColor.UpdatedAt = DateTime.Now;
+            tapeColor.UpdatedAt = DateTime.UtcNow;
 
             _unitOfWork.TapeColors.Update(tapeColor);
             await _unitOfWork.SaveChangesAsync();

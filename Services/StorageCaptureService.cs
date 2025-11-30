@@ -70,7 +70,7 @@ namespace AvyyanBackend.Services
 			}
 
 			_mapper.Map(updateStorageCaptureDto, storageCapture);
-			storageCapture.UpdatedAt = DateTime.Now;
+			storageCapture.UpdatedAt = DateTime.UtcNow;
 
 			_storageCaptureRepository.Update(storageCapture);
 			await _unitOfWork.SaveChangesAsync();

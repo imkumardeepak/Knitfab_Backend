@@ -9,9 +9,9 @@ namespace AvyyanBackend.Models
         public int Id { get; set; }
 
         [Column(TypeName = "timestamp without time zone")]
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 		[Column(TypeName = "timestamp without time zone")]
-		public DateTime? UpdatedAt { get; set; }= DateTime.Now;
+		public DateTime? UpdatedAt { get; set; }= DateTime.UtcNow;
 
 		public bool IsActive { get; set; } = true;
         

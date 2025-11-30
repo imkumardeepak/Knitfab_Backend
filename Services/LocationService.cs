@@ -83,7 +83,7 @@ namespace AvyyanBackend.Services
             }
 
             _mapper.Map(updateLocationDto, location);
-            location.UpdatedAt = DateTime.Now;
+            location.UpdatedAt = DateTime.UtcNow;
 
             _locationRepository.Update(location);
             await _unitOfWork.SaveChangesAsync();

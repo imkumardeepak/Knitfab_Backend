@@ -94,7 +94,7 @@ namespace AvyyanBackend.DTOs.SalesOrder
 
         public int ProcessFlag { get; set; } = 0;
 
-        public DateTime ProcessDate { get; set; } = DateTime.Now;
+        public DateTime ProcessDate { get; set; } = DateTime.UtcNow;
 
         public ICollection<CreateSalesOrderItemRequestDto> Items { get; set; } = new List<CreateSalesOrderItemRequestDto>();
     }

@@ -65,8 +65,8 @@ namespace AvyyanBackend.Services
                     PhoneNumber = "1234567890",
                     CreatedBy = "System",
 					UpdatedBy = "System",
-                    CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
 				};
 
                 _context.Users.Add(adminUser);

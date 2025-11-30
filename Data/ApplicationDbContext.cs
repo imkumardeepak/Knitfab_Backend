@@ -293,13 +293,13 @@ namespace AvyyanBackend.Data
 			{
 				if (entry.State == EntityState.Added)
 				{
-					((BaseEntity)entry.Entity).CreatedAt = DateTime.Now;
+					((BaseEntity)entry.Entity).CreatedAt = DateTime.UtcNow;
 					((BaseEntity)entry.Entity).CreatedBy = currentUser;
 				}
 
 				if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
 				{
-					((BaseEntity)entry.Entity).UpdatedAt = DateTime.Now;
+					((BaseEntity)entry.Entity).UpdatedAt = DateTime.UtcNow;
 					((BaseEntity)entry.Entity).UpdatedBy = currentUser;
 				}
 			}

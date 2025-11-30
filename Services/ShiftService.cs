@@ -80,7 +80,7 @@ namespace AvyyanBackend.Services
             }
 
             _mapper.Map(updateShiftDto, shift);
-            shift.UpdatedAt = DateTime.Now;
+            shift.UpdatedAt = DateTime.UtcNow;
 
             _unitOfWork.Shifts.Update(shift);
             await _unitOfWork.SaveChangesAsync();

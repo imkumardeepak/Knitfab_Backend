@@ -109,7 +109,7 @@ namespace AvyyanBackend.DTOs.SalesOrder
         [MaxLength(50)]
         public string VoucherNumber { get; set; } = string.Empty;
 
-        public DateTime OrderDate { get; set; } = DateTime.Now;
+        public DateTime OrderDate { get; set; } = DateTime.UtcNow;
 
         [MaxLength(50)]
         public string TermsOfPayment { get; set; } = string.Empty;

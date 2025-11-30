@@ -56,7 +56,7 @@ namespace AvyyanBackend.Models
 		public int ProcessFlag { get; set; } = 0;
 
         [Column(TypeName = "timestamp without time zone")]
-		public DateTime ProcessDate { get; set; } = DateTime.Now;
+		public DateTime ProcessDate { get; set; } = DateTime.UtcNow;
 
 		public virtual ICollection<SalesOrderItem> Items { get; set; }
 	}
@@ -101,7 +101,7 @@ namespace AvyyanBackend.Models
 		public int ProcessFlag { get; set; } = 0;
 
 		[Column(TypeName = "timestamp without time zone")]
-		public DateTime ProcessDate { get; set; } = DateTime.Now;
+		public DateTime ProcessDate { get; set; } = DateTime.UtcNow;
 
 		[ForeignKey("SalesOrderId")]
 		[JsonIgnore]

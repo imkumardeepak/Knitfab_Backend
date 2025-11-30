@@ -98,7 +98,7 @@ namespace AvyyanBackend.Services
             user.Email = updateUserDto.Email;
             user.PhoneNumber = updateUserDto.PhoneNumber;
             user.IsActive = updateUserDto.IsActive;
-            user.UpdatedAt = DateTime.Now;
+            user.UpdatedAt = DateTime.UtcNow;
             user.RoleName = updateUserDto.RoleName;
 
             _userRepository.Update(user);
@@ -120,7 +120,7 @@ namespace AvyyanBackend.Services
             user.LastName = updateUserDto.LastName;
             user.Email = updateUserDto.Email;
             user.PhoneNumber = updateUserDto.PhoneNumber;
-            user.UpdatedAt = DateTime.Now;
+            user.UpdatedAt = DateTime.UtcNow;
 
             _userRepository.Update(user);
             await _unitOfWork.SaveChangesAsync();
@@ -146,7 +146,7 @@ namespace AvyyanBackend.Services
                 return false;
 
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(changePasswordDto.NewPassword);
-            user.UpdatedAt = DateTime.Now;
+            user.UpdatedAt = DateTime.UtcNow;
 
             _userRepository.Update(user);
             return await _unitOfWork.SaveChangesAsync() > 0;

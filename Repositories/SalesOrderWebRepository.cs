@@ -65,7 +65,7 @@ namespace AvyyanBackend.Repositories
             existingSalesOrderWeb.TermsOfPayment = salesOrderWeb.TermsOfPayment;
             existingSalesOrderWeb.IsJobWork = salesOrderWeb.IsJobWork;
             existingSalesOrderWeb.Remarks = salesOrderWeb.Remarks;
-            existingSalesOrderWeb.UpdatedAt = DateTime.Now;
+            existingSalesOrderWeb.UpdatedAt = DateTime.UtcNow;
 
             // Remove items that are not in the updated list
             var itemsToRemove = existingSalesOrderWeb.Items

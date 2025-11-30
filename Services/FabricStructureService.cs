@@ -83,7 +83,7 @@ namespace AvyyanBackend.Services
             }
 
             _mapper.Map(updateFabricStructureDto, fabricStructure);
-            fabricStructure.UpdatedAt = DateTime.Now;
+            fabricStructure.UpdatedAt = DateTime.UtcNow;
 
             _fabricStructureRepository.Update(fabricStructure);
             await _unitOfWork.SaveChangesAsync();

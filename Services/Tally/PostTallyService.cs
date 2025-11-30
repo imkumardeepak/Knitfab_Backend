@@ -286,9 +286,9 @@ namespace TallyERPWebApi.Service
                               .Replace("<itemname>", item.StockItemName.ToUpper().Trim())
                               .Replace("<itemqnty>", item.ActualQty)
                               .Replace("<itemsum>", item.Amount)
-                              .Replace("<ordernumber>", "ORDER" + DateTime.Now.ToString("HH:mm:ss").Replace("-", "").Replace("/", "").Replace(":", ""))
+                              .Replace("<ordernumber>", "ORDER" + DateTime.UtcNow.ToString("HH:mm:ss").Replace("-", "").Replace("/", "").Replace(":", ""))
                               .Replace("<itemrate>", item.Rate)
-                              .Replace("<trackingno>", "TRACK" + DateTime.Now.ToString("HH:mm:ss").Replace("-", "").Replace("/", "").Replace(":", ""))
+                              .Replace("<trackingno>", "TRACK" + DateTime.UtcNow.ToString("HH:mm:ss").Replace("-", "").Replace("/", "").Replace(":", ""))
                               .Replace("<accoutgroup>", voucher.AccountType);
 
 
@@ -302,10 +302,10 @@ namespace TallyERPWebApi.Service
                             .Replace("<vouchertype>", voucher.VoucherType.ToUpper().Trim())
                             .Replace("<date>", voucher.Date.Replace("-", ""))
                             .Replace("<customername>", voucher.PartyName.ToUpper().Trim())
-                            .Replace("<documnetno>", "DOC" + DateTime.Now.ToString("HH:mm:ss").Replace("-", "").Replace("/", "").Replace(":", ""))
-                            .Replace("<ordernumber>", "ORDER" + DateTime.Now.ToString("HH:mm:ss").Replace("-", "").Replace("/", "").Replace(":", ""))
+                            .Replace("<documnetno>", "DOC" + DateTime.UtcNow.ToString("HH:mm:ss").Replace("-", "").Replace("/", "").Replace(":", ""))
+                            .Replace("<ordernumber>", "ORDER" + DateTime.UtcNow.ToString("HH:mm:ss").Replace("-", "").Replace("/", "").Replace(":", ""))
                             .Replace("<vehicleno>", "MH01XX1234")
-                            .Replace("<trackingno>", "TRACK" + DateTime.Now.ToString("HH:mm:ss").Replace("-", "").Replace("/", "").Replace(":", ""))
+                            .Replace("<trackingno>", "TRACK" + DateTime.UtcNow.ToString("HH:mm:ss").Replace("-", "").Replace("/", "").Replace(":", ""))
                             .Replace("<overallamunt>", voucher.overallamount)
                             .Replace("<additem>", addmoreitem)
                             .Replace("&", "&amp;");
@@ -390,7 +390,7 @@ namespace TallyERPWebApi.Service
                                               .Replace("<BIND_BASEAMOUNT>", (purchase.BaseAmount).ToString())
                                               .Replace("<BIND_TOTALAMOUNT>", (purchase.FinalAmount).ToString())
                                               .Replace("<BIND_DISPATCHEDBY>", "NA")
-                                              //.Replace("{Currentdate}", DateTime.Now.ToString("yyyyMMdd"));
+                                              //.Replace("{Currentdate}", DateTime.UtcNow.ToString("yyyyMMdd"));
                                               .Replace("{Currentdate}", voucher.podate.Replace("-", ""));
                 StringBuilder productEntries = new StringBuilder();
                 StringBuilder LEDFEREntries = new StringBuilder();
@@ -630,7 +630,7 @@ namespace TallyERPWebApi.Service
                                                .Replace("<BIND_BASEAMOUNT>", "-" + (so_inward.FinalAmount).ToString())
                                                .Replace("<BIND_TOTALAMOUNT>", (so_inward.FinalAmount).ToString())
                                                .Replace("<BIND_DISPATCHEDBY>", "NA")
-                                               //.Replace("{Currentdate}", DateTime.Now.ToString("yyyyMMdd"));
+                                               //.Replace("{Currentdate}", DateTime.UtcNow.ToString("yyyyMMdd"));
                                                .Replace("{Currentdate}", so_inward.sodate.Replace("-", ""));
 
 
@@ -1552,7 +1552,7 @@ namespace TallyERPWebApi.Service
                                               .Replace("<BIND_BASEAMOUNT>", "-" + (applicant.FinalAmount).ToString())
                                               .Replace("<BIND_DISPATCHEDBY>", applicant.dispatchby.Replace("&", "&amp;"))
                                               .Replace("<BIND_REF_ORDERNAME>", BIND_REF_ORDERNAME.Replace("&", "&amp;"));
-                                              //.Replace("{Currentdate}", DateTime.Now.ToString("yyyyMMdd"));
+                                              //.Replace("{Currentdate}", DateTime.UtcNow.ToString("yyyyMMdd"));
                                               //.Replace("{Currentdate}", applicant.invDate.Replace("-", ""));
 
                 StringBuilder productEntries = new StringBuilder();

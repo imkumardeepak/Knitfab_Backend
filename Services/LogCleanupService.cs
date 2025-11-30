@@ -51,7 +51,7 @@ namespace AvyyanBackend.Services
             }
 
             var logFiles = Directory.GetFiles(_logDirectory, "*.log");
-            var cutoffDate = DateTime.Now.AddDays(-2);
+            var cutoffDate = DateTime.UtcNow.AddDays(-2);
             var deletedCount = 0;
 
             foreach (var file in logFiles)
