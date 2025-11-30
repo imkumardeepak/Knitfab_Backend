@@ -1,0 +1,97 @@
+﻿<ENVELOPE>
+	<HEADER>
+		<TALLYREQUEST>Import Data</TALLYREQUEST>
+	</HEADER>
+	<BODY>
+		<IMPORTDATA>
+			<REQUESTDESC>
+				<REPORTNAME>All Masters</REPORTNAME>
+				<STATICVARIABLES>
+					<SVCURRENTCOMPANY>{Cname}</SVCURRENTCOMPANY>
+				</STATICVARIABLES>
+			</REQUESTDESC>
+			<REQUESTDATA>
+				<TALLYMESSAGE xmlns:UDF="TallyUDF">
+					<LEDGER Action="Create">
+						<NAME.LIST TYPE="String">
+							<NAME>
+								<name1>
+							</NAME>
+							<NAME>
+								<name2>
+							</NAME>
+						</NAME.LIST>
+						<PARENT>
+							<parent>
+						</PARENT>
+						<ADDRESS>
+							<address>
+						</ADDRESS>
+						<COUNTRYOFRESIDENCE>
+							<country>
+						</COUNTRYOFRESIDENCE>
+						<LEDSTATENAME>
+							<state>
+						</LEDSTATENAME>
+						<LEDGERMOBILE>
+							<phoneno>
+						</LEDGERMOBILE>
+						<LEDGERCOUNTRYISDCODE>+91</LEDGERCOUNTRYISDCODE>
+						<PARTYGSTIN>
+							<gst>
+						</PARTYGSTIN>
+						<LEDGSTREGDETAILS.LIST>
+							<APPLICABLEFROM>20240401</APPLICABLEFROM>
+							<GSTREGISTRATIONTYPE>Regular</GSTREGISTRATIONTYPE>
+							<TRANSPORTERID/>
+							<STATE/>
+							<PLACEOFSUPPLY>
+								<state>
+							</PLACEOFSUPPLY>
+							<GSTIN>
+								<gst>
+							</GSTIN>
+							<ISOTHTERRITORYASSESSEE/>
+							<CONSIDERPURCHASEFOREXPORT/>
+							<ISTRANSPORTER/>
+							<ISCOMMONPARTY/>
+						</LEDGSTREGDETAILS.LIST>
+						<LEDMAILINGDETAILS.LIST>
+							<ADDRESS.LIST TYPE="String">
+								<ADDRESS>
+									<address>
+								</ADDRESS>
+								<ADDRESS>
+									<city>
+								</ADDRESS>
+							</ADDRESS.LIST>
+							<APPLICABLEFROM>20240401</APPLICABLEFROM>
+							<PINCODE>
+								<pincode>
+							</PINCODE>
+							<MAILINGNAME>
+								<name1>
+							</MAILINGNAME>
+							<STATE>
+								<state>
+							</STATE>
+							<COUNTRY>
+								<country>
+							</COUNTRY>
+							<OVERRIDECREDITLIMIT>No</OVERRIDECREDITLIMIT>
+							<LEDGERCONTACT>{BIND_CONTACTPERSON_NAME}</LEDGERCONTACT>
+							<EMAIL>{BIND_CONTACTPERSON_EMAIL}</EMAIL>
+							<LEDGERPHONE>{BIND_CONTACTPERSON_PHONENO}</LEDGERPHONE>
+							<OPENINGBALANCE>0.00</OPENINGBALANCE>
+							<SAMPLINGAMTONEFACTOR/>
+							<SAMPLINGAMTTWOFACTOR/>
+							<CREDITLIMIT>{BIND_CREDITLIMIT}</CREDITLIMIT>
+							<GRATUITYLIMITAMOUNT/>
+							<ODLIMIT/>
+						</LEDMAILINGDETAILS.LIST>
+					</LEDGER>
+				</TALLYMESSAGE>
+			</REQUESTDATA>
+		</IMPORTDATA>
+	</BODY>
+</ENVELOPE>

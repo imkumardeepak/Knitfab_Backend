@@ -1,0 +1,21 @@
+﻿<ENVELOPE>
+	<HEADER>
+		<VERSION>1</VERSION>
+		<TALLYREQUEST>Export</TALLYREQUEST>
+		<TYPE>Collection</TYPE>
+		<ID>ListOfCompanies</ID>
+	</HEADER>
+	<BODY>
+		<DESC>
+			<STATICVARIABLES />
+			<TDL>
+				<TDLMESSAGE>
+					<COLLECTION NAME="ListOfCompanies">
+						<TYPE>Company</TYPE>
+						<FETCH>NAME</FETCH>
+					</COLLECTION>
+				</TDLMESSAGE>
+			</TDL>
+		</DESC>
+	</BODY>
+</ENVELOPE>

@@ -1,0 +1,30 @@
+<ENVELOPE>
+    <HEADER>
+        <VERSION>1</VERSION>
+        <TALLYREQUEST>EXPORT</TALLYREQUEST>
+        <TYPE>OBJECT</TYPE>
+        <SUBTYPE>Ledger</SUBTYPE>
+        <ID TYPE="Name">{CustomerName}</ID>
+    </HEADER>
+    <BODY>
+        <DESC>
+            <STATICVARIABLES>
+                <SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>
+                <SVCURRENTCOMPANY>{Cname}</SVCURRENTCOMPANY>
+            </STATICVARIABLES>
+            <FETCHLIST>
+                <FETCH>Name</FETCH>
+                <FETCH>TNetBalance</FETCH>
+                <FETCH>LedgerPhone</FETCH>
+                <FETCH>OpeningBalance</FETCH>
+                <FETCH>ClosingBalance</FETCH>
+            </FETCHLIST>
+            <TDL>
+                <TDLMESSAGE>
+                    <OBJECT NAME="Ledger"
+                            ISINITIALIZE="Yes" />
+                </TDLMESSAGE>
+            </TDL>
+        </DESC>
+    </BODY>
+</ENVELOPE>

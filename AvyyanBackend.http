@@ -1,0 +1,38 @@
+@AvyyanBackend_HostAddress = http://localhost:5000
+@ContentType = application/json
+
+### Get all tape colors
+GET {{AvyyanBackend_HostAddress}}/api/TapeColor
+Accept: {{ContentType}}
+
+### Create a new tape color
+POST {{AvyyanBackend_HostAddress}}/api/TapeColor
+Content-Type: {{ContentType}}
+
+{
+  "tapeColor": "Red Tape",
+  "colorCode": "RED001",
+  "shortCode": "RT"
+}
+
+### Get a specific tape color by ID
+GET {{AvyyanBackend_HostAddress}}/api/TapeColor/1
+Accept: {{ContentType}}
+
+### Update a tape color
+PUT {{AvyyanBackend_HostAddress}}/api/TapeColor/1
+Content-Type: {{ContentType}}
+
+{
+  "tapeColor": "Blue Tape",
+  "colorCode": "BLU001",
+  "shortCode": "BT",
+  "isActive": true
+}
+
+### Delete a tape color
+DELETE {{AvyyanBackend_HostAddress}}/api/TapeColor/1
+
+### Search tape colors
+GET {{AvyyanBackend_HostAddress}}/api/TapeColor/search?tapeColor=Blue
+Accept: {{ContentType}}
