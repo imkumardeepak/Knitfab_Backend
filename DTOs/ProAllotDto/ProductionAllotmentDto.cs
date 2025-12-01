@@ -43,7 +43,7 @@ namespace AvyyanBackend.DTOs.ProAllotDto
 		public int MachineId { get; set; }
 		public int NumberOfNeedles { get; set; }
 		public int Feeders { get; set; }
-		public int RPM { get; set; }
+		public decimal RPM { get; set; }
 		public decimal RollPerKg { get; set; }
 		public decimal TotalLoadWeight { get; set; }
 		public decimal TotalRolls { get; set; }
