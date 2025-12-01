@@ -43,7 +43,7 @@ namespace AvyyanBackend.Services
             dispatchPlanning.IsActive = true;
             
             // Check if required rolls match dispatched rolls to determine status
-            dispatchPlanning.IsFullyDispatched = dispatchPlanning.TotalRequiredRolls <= dispatchPlanning.TotalDispatchedRolls;
+            dispatchPlanning.IsFullyDispatched = false;
             
             var created = await _repository.CreateAsync(dispatchPlanning);
             return _mapper.Map<DispatchPlanningDto>(created);
