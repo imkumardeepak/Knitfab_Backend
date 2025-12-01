@@ -108,8 +108,7 @@ namespace AvyyanBackend.Services
                 TotalRequiredRolls = totalRequiredRolls,
                 TotalReadyRolls = totalReadyRolls,
                 TotalDispatchedRolls = totalDispatchedRolls,
-                // Only mark as fully dispatched if required rolls match dispatched rolls
-                IsFullyDispatched = totalRequiredRolls <= totalDispatchedRolls,
+                IsFullyDispatched = false,
                 DispatchStartDate = DateTime.UtcNow,
                 DispatchEndDate = DateTime.UtcNow,
                 VehicleNo = vehicleNo,
