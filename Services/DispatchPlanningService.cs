@@ -41,10 +41,7 @@ namespace AvyyanBackend.Services
             dispatchPlanning.DispatchOrderId = dispatchOrderId;
             dispatchPlanning.CreatedAt = DateTime.UtcNow;
             dispatchPlanning.IsActive = true;
-            
-            // Check if required rolls match dispatched rolls to determine status
             dispatchPlanning.IsFullyDispatched = false;
-            
             var created = await _repository.CreateAsync(dispatchPlanning);
             return _mapper.Map<DispatchPlanningDto>(created);
         }
@@ -188,7 +185,7 @@ namespace AvyyanBackend.Services
                 dispatchPlanning.LoadingNo = loadingNo;
                 
                 // Check if required rolls match dispatched rolls to determine status
-                dispatchPlanning.IsFullyDispatched = dispatchPlanning.TotalRequiredRolls <= dispatchPlanning.TotalDispatchedRolls;
+                dispatchPlanning.IsFullyDispatched = false;
                 
                 var created = await _repository.CreateAsync(dispatchPlanning);
                 results.Add(_mapper.Map<DispatchPlanningDto>(created));
