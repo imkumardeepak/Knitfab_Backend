@@ -188,6 +188,7 @@ namespace AvyyanBackend.Controllers
 							Composition = soItem.Composition,
 							Diameter = soItem.Dia,
 							Gauge = soItem.GG,
+							ColourCode = "NA",
 							Efficiency = fabTyp?.Standardeffencny ?? 0,
 							PartyName = so.BuyerName,
 							YarnCount = soItem.YarnCount,
