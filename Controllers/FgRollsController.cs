@@ -135,10 +135,7 @@ namespace AvyyanBackend.Controllers
 					}
 
 					// 2️⃣ Validate Item belongs to the same SalesOrder
-					var soItem = soItemList.FirstOrDefault(x =>
-					x.SalesOrderWebId == so.Id &&
-					x.ItemName.Trim() == itemName
-				);
+					var soItem = soItemList.FirstOrDefault(x => x.SalesOrderWebId == so.Id && x.ItemName.Trim() == itemName);
 
 					if (soItem == null)
 					{
@@ -150,6 +147,16 @@ namespace AvyyanBackend.Controllers
 						});
 						totalErrors++;
 						continue;
+					}
+
+					soItem.IsProcess = true;
+					soItem.ProcessDate = DateTime.UtcNow;
+
+					// Check if all items are processed, then mark the entire order as processed
+					if (so.Items.All(item => item.IsProcess == true))
+					{
+						so.IsProcess = true;
+						so.ProcessDate = DateTime.UtcNow;
 					}
 
 					if (soItem.YarnCount == null)
