@@ -456,6 +456,126 @@ namespace AvyyanBackend.Controllers
 			}
 		}
 
+		// POST api/productionallotment/fgsticker/bulk - Print FG Roll stickers for multiple roll confirmations
+		[HttpPost("fgsticker/bulk")]
+		public IActionResult PrintFGRollStickersBulk([FromBody] int[] rollConfirmationIds)
+		{
+			try
+			{
+				if (rollConfirmationIds == null || rollConfirmationIds.Length == 0)
+				{
+					return BadRequest("No roll confirmation IDs provided.");
+				}
+
+				var results = new List<object>();
+				var successCount = 0;
+				var errorCount = 0;
+
+				foreach (var id in rollConfirmationIds)
+				{
+					try
+					{
+						// Get the specific roll confirmation
+						var rollConfirmation = _context.RollConfirmations
+							.FirstOrDefault(rc => rc.Id == id);
+
+						if (rollConfirmation == null)
+						{
+							results.Add(new { id, success = false, message = $"Roll confirmation with ID {id} not found." });
+							errorCount++;
+							continue;
+						}
+
+						// Get the related production allotment
+						var productionAllotment = _context.ProductionAllotments
+							.FirstOrDefault(pa => pa.AllotmentId == rollConfirmation.AllotId);
+
+						if (productionAllotment == null)
+						{
+							results.Add(new { id, success = false, message = $"Production allotment with AllotId {rollConfirmation.AllotId} not found." });
+							errorCount++;
+							continue;
+						}
+
+						string filepath = Path.Combine("wwwroot", "Sticker", "FGRoll.prn");
+						string printerName = _configuration["Printers:FG_Printer_IP"];
+
+						if (!System.IO.File.Exists(filepath))
+						{
+							results.Add(new { id, success = false, message = "FG Roll PRN template file not found." });
+							errorCount++;
+							continue;
+						}
+
+						// Read the PRN file content
+						string fileContent = System.IO.File.ReadAllText(filepath);
+
+						// Prepare customer name (split at word boundaries for the two customer fields)
+						string customerName = productionAllotment.PartyName?.Trim() ?? "";
+						string customer1 = customerName;
+						string customer2 = "";
+
+						// If customer name is long, split it between the two fields at word boundaries
+						if (customerName.Length > 20)
+						{
+							// Find the last space within the first 20 characters
+							int splitIndex = customerName.Substring(0, 20).LastIndexOf(' ');
+
+							// If no space found or it's at the beginning, split at position 20
+							if (splitIndex <= 0)
+							{
+								splitIndex = 20;
+							}
+
+							customer1 = customerName.Substring(0, splitIndex).Trim();
+							customer2 = customerName.Substring(splitIndex).Trim();
+						}
+
+						// Replace placeholders with actual values from roll confirmation and related data
+						string currentFileContent = fileContent
+							.Replace("<CUSTOMER1>", customer1)
+							.Replace("<CUSTOMER2>", customer2)
+							.Replace("<MCCODE>", rollConfirmation.MachineName.Trim())
+							.Replace("<YCOUNT>", productionAllotment.YarnCount?.Trim() ?? "")
+							.Replace("<DIAGG>", $"{productionAllotment.Diameter} X {productionAllotment.Gauge}")
+							.Replace("<STICHLEN>", productionAllotment.StitchLength.ToString())
+							.Replace("<FGSM>", rollConfirmation.GreyGsm.ToString("F2"))
+							.Replace("<WIDTH>", rollConfirmation.GreyWidth.ToString("F2"))
+							.Replace("<SLITLINE>", productionAllotment.SlitLine?.Trim() ?? "")
+							.Replace("<TAPE>", productionAllotment.TapeColor?.Trim() ?? "")
+							.Replace("<GROSSWT>", rollConfirmation.GrossWeight?.ToString("F2") ?? "")
+							.Replace("<NETWT>", rollConfirmation.NetWeight?.ToString("F2") ?? "")
+							.Replace("<LCODE>", rollConfirmation.AllotId.Trim())
+							.Replace("<ROLLNO>", rollConfirmation.RollNo.Trim())
+							.Replace("<FGROLLNO>", rollConfirmation.FgRollNo?.ToString() ?? rollConfirmation.RollNo.Trim()) // Use FG Roll No if available
+							.Replace("<FEBTYP>", productionAllotment.FabricType?.Trim() ?? "")
+							.Replace("<COMP>", productionAllotment.Composition?.Trim() ?? "");
+
+						// Send to printer
+						PrintToNetworkPrinter(printerName, currentFileContent);
+
+						results.Add(new { id, success = true, message = "FG Roll sticker printed successfully." });
+						successCount++;
+					}
+					catch (Exception ex)
+					{
+						results.Add(new { id, success = false, message = $"Error printing FG Roll sticker: {ex.Message}" });
+						errorCount++;
+					}
+				}
+
+				return Ok(new { 
+					message = $"Bulk print completed. Success: {successCount}, Errors: {errorCount}", 
+					results,
+					success = errorCount == 0
+				});
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, $"Error printing FG Roll stickers: {ex.Message}");
+			}
+		}
+
 		private void PrintToNetworkPrinter(string printerIp, string content)
 		{
 			try
