@@ -40,6 +40,9 @@ namespace AvyyanBackend.DTOs.SalesOrder
 
         // Order details
         public string Remarks { get; set; } = string.Empty;
+        
+        // Other Reference field
+        public string? OtherReference { get; set; } = string.Empty;
 
         // New fields for totals
         public decimal TotalQuantity { get; set; }
@@ -175,6 +178,19 @@ namespace AvyyanBackend.DTOs.SalesOrder
 
         [MaxLength(500)]
         public string Remarks { get; set; } = string.Empty;
+        
+        // Other Reference field
+        [MaxLength(500)]
+        public string OtherReference { get; set; } = string.Empty;
+        
+        [MaxLength(100)]
+        public string OrderNo { get; set; } = string.Empty;
+        
+        [MaxLength(200)]
+        public string TermsOfDelivery { get; set; } = string.Empty;
+        
+        [MaxLength(200)]
+        public string DispatchThrough { get; set; } = string.Empty;
 
         // New fields for totals
         public decimal TotalQuantity { get; set; } = 0;
@@ -314,6 +330,19 @@ namespace AvyyanBackend.DTOs.SalesOrder
 
         [MaxLength(500)]
         public string Remarks { get; set; } = string.Empty;
+        
+        // Other Reference field
+        [MaxLength(500)]
+        public string OtherReference { get; set; } = string.Empty;
+        
+        [MaxLength(100)]
+        public string OrderNo { get; set; } = string.Empty;
+        
+        [MaxLength(200)]
+        public string TermsOfDelivery { get; set; } = string.Empty;
+        
+        [MaxLength(200)]
+        public string DispatchThrough { get; set; } = string.Empty;
 
         // New fields for totals
         public decimal TotalQuantity { get; set; } = 0;

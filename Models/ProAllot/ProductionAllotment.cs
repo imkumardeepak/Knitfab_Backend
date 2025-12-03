@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AvyyanBackend.Models.ProAllot
@@ -89,6 +89,9 @@ namespace AvyyanBackend.Models.ProAllot
 		public string TapeColor { get; set; }
 
 		public string? SerialNo { get; set; } // Format: "0001", "0002", etc."
+
+		[MaxLength(500)]
+		public string? OtherReference { get; set; } // Other reference field
 
 		public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 

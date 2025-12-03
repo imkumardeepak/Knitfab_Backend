@@ -1,4 +1,4 @@
-﻿using AvyyanBackend.Models.ProAllot;
+﻿﻿﻿using AvyyanBackend.Models.ProAllot;
 using System.ComponentModel.DataAnnotations;
 
 namespace AvyyanBackend.DTOs.ProAllotDto
@@ -27,6 +27,10 @@ namespace AvyyanBackend.DTOs.ProAllotDto
 		public decimal? ReqFinishGsm { get; set; }
 		public decimal? ReqFinishWidth { get; set; }
 		public string PartyName { get; set; }
+
+		// Other Reference field
+		[MaxLength(500)]
+		public string? OtherReference { get; set; }
 
 		// Packaging Details
 		public decimal TubeWeight { get; set; }
@@ -92,6 +96,10 @@ namespace AvyyanBackend.DTOs.ProAllotDto
 		public decimal? ReqFinishGsm { get; set; }
 		public decimal? ReqFinishWidth { get; set; }
 		public string PartyName { get; set; }
+
+		// Other Reference field
+		[MaxLength(500)]
+		public string? OtherReference { get; set; }
 
 		// Packaging Details
 		public decimal TubeWeight { get; set; }

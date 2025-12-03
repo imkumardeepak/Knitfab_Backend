@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+﻿﻿﻿﻿﻿﻿﻿using AutoMapper;
 using AvyyanBackend.Data;
 using AvyyanBackend.DTOs.ProAllotDto;
 using AvyyanBackend.Models.ProAllot;
@@ -114,6 +114,7 @@ namespace AvyyanBackend.Controllers
 					ReqFinishGsm = productionAllotment.ReqFinishGsm,
 					ReqFinishWidth = productionAllotment.ReqFinishWidth,
 					PartyName = productionAllotment.PartyName,
+					OtherReference = productionAllotment.OtherReference,
 					TubeWeight = productionAllotment.TubeWeight,
 					ShrinkRapWeight = productionAllotment.ShrinkRapWeight,
 					TotalWeight = productionAllotment.TotalWeight,
@@ -404,8 +405,38 @@ namespace AvyyanBackend.Controllers
 				// Read the PRN file content
 				string fileContent = System.IO.File.ReadAllText(filepath);
 
+				// Get company name from SalesOrderWeb
+				string companyName = "AVYAAN KNITFAB"; // Default company name
+				
+				// Try to get SalesOrderWeb to fetch company name
+				var salesOrderWeb = _context.SalesOrdersWeb
+					.FirstOrDefault(sow => sow.Id == productionAllotment.SalesOrderId);
+				
+				// If SalesOrderWeb not found, try to find it through SalesOrder
+				if (salesOrderWeb == null)
+				{
+					var salesOrder = _context.SalesOrders
+						.FirstOrDefault(so => so.Id == productionAllotment.SalesOrderId);
+					
+					// Try to match by voucher number if available
+					if (salesOrder != null)
+					{
+						salesOrderWeb = _context.SalesOrdersWeb
+							.FirstOrDefault(sow => sow.VoucherNumber == salesOrder.VoucherNumber);
+					}
+				}
+				
+				// Use company name from SalesOrderWeb if available
+				if (salesOrderWeb != null)
+				{
+					companyName = salesOrderWeb.CompanyName?.Trim() ?? "AVYAAN KNITFAB";
+				}
+
 				// Prepare customer name (split at word boundaries for the two customer fields)
-				string customerName = productionAllotment.PartyName?.Trim() ?? "";
+				// Use OtherReference if available, otherwise use PartyName
+				string customerName = !string.IsNullOrWhiteSpace(productionAllotment.OtherReference) 
+					? productionAllotment.OtherReference.Trim() 
+					: productionAllotment.PartyName?.Trim() ?? "";
 				string customer1 = customerName;
 				string customer2 = "";
 
@@ -427,6 +458,7 @@ namespace AvyyanBackend.Controllers
 
 				// Replace placeholders with actual values from roll confirmation and related data
 				string currentFileContent = fileContent
+					.Replace("<CompanyName>", companyName)
 					.Replace("<CUSTOMER1>", customer1)
 					.Replace("<CUSTOMER2>", customer2)
 					.Replace("<MCCODE>", rollConfirmation.MachineName.Trim())
@@ -510,8 +542,38 @@ namespace AvyyanBackend.Controllers
 						// Read the PRN file content
 						string fileContent = System.IO.File.ReadAllText(filepath);
 
+						// Get company name from SalesOrderWeb
+						string companyName = "AVYAAN KNITFAB"; // Default company name
+						
+						// Try to get SalesOrderWeb to fetch company name
+						var salesOrderWeb = _context.SalesOrdersWeb
+							.FirstOrDefault(sow => sow.Id == productionAllotment.SalesOrderId);
+						
+						// If SalesOrderWeb not found, try to find it through SalesOrder
+						if (salesOrderWeb == null)
+						{
+							var salesOrder = _context.SalesOrders
+								.FirstOrDefault(so => so.Id == productionAllotment.SalesOrderId);
+							
+							// Try to match by voucher number if available
+							if (salesOrder != null)
+							{
+								salesOrderWeb = _context.SalesOrdersWeb
+									.FirstOrDefault(sow => sow.VoucherNumber == salesOrder.VoucherNumber);
+							}
+						}
+						
+						// Use company name from SalesOrderWeb if available
+						if (salesOrderWeb != null)
+						{
+							companyName = salesOrderWeb.CompanyName?.Trim() ?? "AVYAAN KNITFAB";
+						}
+
 						// Prepare customer name (split at word boundaries for the two customer fields)
-						string customerName = productionAllotment.PartyName?.Trim() ?? "";
+						// Use OtherReference if available, otherwise use PartyName
+						string customerName = !string.IsNullOrWhiteSpace(productionAllotment.OtherReference) 
+							? productionAllotment.OtherReference.Trim() 
+							: productionAllotment.PartyName?.Trim() ?? "";
 						string customer1 = customerName;
 						string customer2 = "";
 
@@ -533,6 +595,7 @@ namespace AvyyanBackend.Controllers
 
 						// Replace placeholders with actual values from roll confirmation and related data
 						string currentFileContent = fileContent
+							.Replace("<CompanyName>", companyName)
 							.Replace("<CUSTOMER1>", customer1)
 							.Replace("<CUSTOMER2>", customer2)
 							.Replace("<MCCODE>", rollConfirmation.MachineName.Trim())
@@ -677,6 +740,7 @@ namespace AvyyanBackend.Controllers
 					ReqFinishGsm = request.ReqFinishGsm,
 					ReqFinishWidth = request.ReqFinishWidth,
 					PartyName = request.PartyName,
+					OtherReference = request.OtherReference,
 					TubeWeight = request.TubeWeight,
 					ShrinkRapWeight = request.ShrinkRapWeight,
 					TotalWeight = request.TotalWeight,

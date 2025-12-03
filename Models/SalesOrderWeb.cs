@@ -22,7 +22,7 @@ namespace AvyyanBackend.Models
         public DateTime OrderDate { get; set; } = DateTime.UtcNow;
 
         [MaxLength(50)]
-        public string TermsOfPayment { get; set; } = string.Empty;
+        public string? TermsOfPayment { get; set; } = string.Empty;
 
         public bool IsJobWork { get; set; } = false; // Checkbox for job work
 
@@ -34,13 +34,13 @@ namespace AvyyanBackend.Models
         public bool IsProcess { get; set; } = false; // Process flag
 
         [MaxLength(100)]
-        public string? OrderNo { get; set; } // Order number
+        public string? OrderNo { get; set; } = string.Empty; // Order number
 
         [MaxLength(200)]
-        public string? TermsOfDelivery { get; set; } // Terms of delivery
+        public string? TermsOfDelivery { get; set; } = string.Empty; // Terms of delivery
 
         [MaxLength(200)]
-        public string? DispatchThrough { get; set; } // Dispatch through
+        public string? DispatchThrough { get; set; } = string.Empty; // Dispatch through
 
         // Company details
         [Required]
@@ -97,6 +97,10 @@ namespace AvyyanBackend.Models
 
         [MaxLength(500)]
         public string Remarks { get; set; } = string.Empty;
+
+        // Other Reference field
+        [MaxLength(500)]
+        public string? OtherReference { get; set; } = string.Empty;
 
         // New fields for totals
         public decimal TotalQuantity { get; set; } = 0;
