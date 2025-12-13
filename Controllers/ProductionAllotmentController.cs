@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿using AutoMapper;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AutoMapper;
 using AvyyanBackend.Data;
 using AvyyanBackend.DTOs.ProAllotDto;
 using AvyyanBackend.Models.ProAllot;
@@ -426,10 +426,23 @@ namespace AvyyanBackend.Controllers
 					}
 				}
 				
-				// Use company name from SalesOrderWeb if available
-				if (salesOrderWeb != null)
+				// Use company name from SalesOrderWeb if available and matches "Avyaan Knitfab" (case insensitive)
+				if (salesOrderWeb != null && !string.IsNullOrWhiteSpace(salesOrderWeb.CompanyName))
 				{
-					companyName = salesOrderWeb.CompanyName?.Trim() ?? "AVYAAN KNITFAB";
+					// Check if company name contains "Avyaan Knitfab" (case insensitive)
+					if (salesOrderWeb.CompanyName.IndexOf("Avyaan Knitfab", StringComparison.OrdinalIgnoreCase) >= 0)
+					{
+						companyName = "AVYAAN KNITFAB"; // Print in uppercase
+					}
+					else
+					{
+						companyName = ""; // Don't print any company name
+					}
+				}
+				else
+				{
+					// If no company name found, don't print any company name
+					companyName = "";
 				}
 
 				// Prepare customer name (split at word boundaries for the two customer fields)
@@ -456,13 +469,49 @@ namespace AvyyanBackend.Controllers
 					customer2 = customerName.Substring(splitIndex).Trim();
 				}
 
+				// Prepare yarn count (split at word boundaries for the two yarn count fields)
+				string yarnCount = productionAllotment.YarnCount?.Trim() ?? "";
+				string yarnCount1 = yarnCount;
+				string yarnCount2 = "";
+
+				// If yarn count is long, split it between the two fields at word boundaries
+				if (yarnCount.Length > 20)
+				{
+					// Find the last space within the first 20 characters
+					int splitIndex = yarnCount.Substring(0, 20).LastIndexOf(' ');
+
+					// If no space found or it's at the beginning, split at position 20
+					if (splitIndex <= 0)
+					{
+						splitIndex = 20;
+					}
+
+					yarnCount1 = yarnCount.Substring(0, splitIndex).Trim();
+					yarnCount2 = yarnCount.Substring(splitIndex).Trim();
+				}
+
+				// Prepare fabric type (split at word boundaries for the two fabric type fields)
+				string fabricType = productionAllotment.FabricType?.Trim() ?? "";
+				string fabricType1 = fabricType;
+				string fabricType2 = "";
+
+				// If fabric type is long, split it between the two fields at word boundaries
+				// As per requirement, split first 9 characters for fabricType1 and remaining for fabricType2
+				if (fabricType.Length > 9)
+				{
+					fabricType1 = fabricType.Substring(0, 9).Trim();
+					fabricType2 = fabricType.Substring(9).Trim();
+				}
+
 				// Replace placeholders with actual values from roll confirmation and related data
 				string currentFileContent = fileContent
 					.Replace("<CompanyName>", companyName)
 					.Replace("<CUSTOMER1>", customer1)
 					.Replace("<CUSTOMER2>", customer2)
 					.Replace("<MCCODE>", rollConfirmation.MachineName.Trim())
-					.Replace("<YCOUNT>", productionAllotment.YarnCount?.Trim() ?? "")
+					.Replace("<YCOUNT>", yarnCount)
+					.Replace("<YARNCOUNT1>", yarnCount1)
+					.Replace("<YARNCOUNT2>", yarnCount2)
 					.Replace("<DIAGG>", $"{productionAllotment.Diameter} X {productionAllotment.Gauge}")
 					.Replace("<STICHLEN>", productionAllotment.StitchLength.ToString())
 					.Replace("<FGSM>", rollConfirmation.GreyGsm.ToString("F2"))
@@ -474,7 +523,9 @@ namespace AvyyanBackend.Controllers
 					.Replace("<LCODE>", rollConfirmation.AllotId.Trim())
 					.Replace("<ROLLNO>", rollConfirmation.RollNo.Trim())
 					.Replace("<FGROLLNO>", rollConfirmation.FgRollNo?.ToString() ?? rollConfirmation.RollNo.Trim()) // Use FG Roll No if available
-					.Replace("<FEBTYP>", productionAllotment.FabricType?.Trim() ?? "")
+					.Replace("<FEBTYP>", fabricType) // Full fabric type
+					.Replace("<FEBTYP1>", fabricType1) // First part of fabric type
+					.Replace("<FEBTYP2>", fabricType2) // Second part of fabric type
 					.Replace("<COMP>", productionAllotment.Composition?.Trim() ?? "");
 
 				// Send to printer
@@ -563,10 +614,23 @@ namespace AvyyanBackend.Controllers
 							}
 						}
 						
-						// Use company name from SalesOrderWeb if available
-						if (salesOrderWeb != null)
+						// Use company name from SalesOrderWeb if available and matches "Avyaan Knitfab" (case insensitive)
+						if (salesOrderWeb != null && !string.IsNullOrWhiteSpace(salesOrderWeb.CompanyName))
 						{
-							companyName = salesOrderWeb.CompanyName?.Trim() ?? "AVYAAN KNITFAB";
+							// Check if company name contains "Avyaan Knitfab" (case insensitive)
+							if (salesOrderWeb.CompanyName.IndexOf("Avyaan Knitfab", StringComparison.OrdinalIgnoreCase) >= 0)
+							{
+								companyName = "AVYAAN KNITFAB"; // Print in uppercase
+							}
+							else
+							{
+								companyName = ""; // Don't print any company name
+							}
+						}
+						else
+						{
+							// If no company name found, don't print any company name
+							companyName = "";
 						}
 
 						// Prepare customer name (split at word boundaries for the two customer fields)
@@ -593,13 +657,49 @@ namespace AvyyanBackend.Controllers
 							customer2 = customerName.Substring(splitIndex).Trim();
 						}
 
+						// Prepare yarn count (split at word boundaries for the two yarn count fields)
+						string yarnCount = productionAllotment.YarnCount?.Trim() ?? "";
+						string yarnCount1 = yarnCount;
+						string yarnCount2 = "";
+
+						// If yarn count is long, split it between the two fields at word boundaries
+						if (yarnCount.Length > 20)
+						{
+							// Find the last space within the first 20 characters
+							int splitIndex = yarnCount.Substring(0, 20).LastIndexOf(' ');
+
+							// If no space found or it's at the beginning, split at position 20
+							if (splitIndex <= 0)
+							{
+								splitIndex = 20;
+							}
+
+							yarnCount1 = yarnCount.Substring(0, splitIndex).Trim();
+							yarnCount2 = yarnCount.Substring(splitIndex).Trim();
+						}
+
+						// Prepare fabric type (split at word boundaries for the two fabric type fields)
+						string fabricType = productionAllotment.FabricType?.Trim() ?? "";
+						string fabricType1 = fabricType;
+						string fabricType2 = "";
+
+						// If fabric type is long, split it between the two fields at word boundaries
+						// As per requirement, split first 9 characters for fabricType1 and remaining for fabricType2
+						if (fabricType.Length > 9)
+						{
+							fabricType1 = fabricType.Substring(0, 9).Trim();
+							fabricType2 = fabricType.Substring(9).Trim();
+						}
+
 						// Replace placeholders with actual values from roll confirmation and related data
 						string currentFileContent = fileContent
 							.Replace("<CompanyName>", companyName)
 							.Replace("<CUSTOMER1>", customer1)
 							.Replace("<CUSTOMER2>", customer2)
 							.Replace("<MCCODE>", rollConfirmation.MachineName.Trim())
-							.Replace("<YCOUNT>", productionAllotment.YarnCount?.Trim() ?? "")
+							.Replace("<YCOUNT>", yarnCount)
+							.Replace("<YARNCOUNT1>", yarnCount1)
+							.Replace("<YARNCOUNT2>", yarnCount2)
 							.Replace("<DIAGG>", $"{productionAllotment.Diameter} X {productionAllotment.Gauge}")
 							.Replace("<STICHLEN>", productionAllotment.StitchLength.ToString())
 							.Replace("<FGSM>", rollConfirmation.GreyGsm.ToString("F2"))
@@ -611,7 +711,9 @@ namespace AvyyanBackend.Controllers
 							.Replace("<LCODE>", rollConfirmation.AllotId.Trim())
 							.Replace("<ROLLNO>", rollConfirmation.RollNo.Trim())
 							.Replace("<FGROLLNO>", rollConfirmation.FgRollNo?.ToString() ?? rollConfirmation.RollNo.Trim()) // Use FG Roll No if available
-							.Replace("<FEBTYP>", productionAllotment.FabricType?.Trim() ?? "")
+							.Replace("<FEBTYP>", fabricType) // Full fabric type
+							.Replace("<FEBTYP1>", fabricType1) // First part of fabric type
+							.Replace("<FEBTYP2>", fabricType2) // Second part of fabric type
 							.Replace("<COMP>", productionAllotment.Composition?.Trim() ?? "");
 
 						// Send to printer

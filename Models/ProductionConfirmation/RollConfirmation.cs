@@ -15,6 +15,8 @@ namespace AvyyanBackend.Models.ProductionConfirmation
         [MaxLength(100)]
         public string MachineName { get; set; }
 
+        // Removed MachineRollNo field since we'll use RollNo for this purpose
+
         [Column(TypeName = "decimal(18,3)")]
         public decimal RollPerKg { get; set; }
 

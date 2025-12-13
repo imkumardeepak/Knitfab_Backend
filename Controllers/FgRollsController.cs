@@ -1,4 +1,4 @@
-﻿﻿using AvyyanBackend.Data;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AvyyanBackend.Data;
 using AvyyanBackend.Models;
 using AvyyanBackend.Models.ProAllot;
 using AvyyanBackend.Models.ProductionConfirmation;
@@ -225,7 +225,7 @@ namespace AvyyanBackend.Controllers
 							.AnyAsync(x =>
 								x.AllotId == lotNo &&
 								x.MachineName == machineName &&
-								x.FgRollNo == rollNoInt);
+								x.RollNo == (r.machineRollNo ?? r.rollNumber));  // Use machineRollNo if available, otherwise rollNumber
 
 						if (!existingRoll)
 						{
@@ -233,8 +233,8 @@ namespace AvyyanBackend.Controllers
 							{
 								AllotId = lotNo,
 								MachineName = machineName,
+								RollNo = r.machineRollNo ?? r.rollNumber,  // Use machineRollNo if available, otherwise rollNumber
 								FgRollNo = rollNoInt,
-								RollNo = rollNoInt.ToString(),
 								NetWeight = Convert.ToDecimal(r.netWt),
 								GrossWeight = Convert.ToDecimal(r.grossWt),
 								TareWeight= Convert.ToDecimal(r.grossWt) - Convert.ToDecimal(r.netWt),
@@ -245,14 +245,14 @@ namespace AvyyanBackend.Controllers
 
 						// Check if storage capture already exists
 						var existingStorageRoll = await _context.StorageCaptures
-							.AnyAsync(x => x.LocationCode == v.location.Trim() && x.FGRollNo == rollNoInt.ToString() && x.LotNo == lotNo);
+							.AnyAsync(x => x.LocationCode == v.location.Trim() && x.FGRollNo == rollNo && x.LotNo == lotNo);
 
 						if (!existingStorageRoll)
 						{
 							newStorageCaptures.Add(new StorageCapture
 							{
 								LocationCode = v.location.Trim(),
-								FGRollNo = rollNoInt.ToString(),
+								FGRollNo = rollNo,  // Use rollNo which is already set to machineRollNo or rollNumber
 								LotNo = lotNo,
 								CreatedAt = DateTime.UtcNow,
 								Tape = v.tape,
@@ -353,6 +353,7 @@ namespace AvyyanBackend.Controllers
 	public class FgRollDto
 	{
 		public string machineNo { get; set; }
+		public string machineRollNo { get; set; }  // Added new field
 		public string rollNumber { get; set; }
 		public string grossWt { get; set; }
 		public string netWt { get; set; }
