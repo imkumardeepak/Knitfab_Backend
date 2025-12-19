@@ -79,7 +79,7 @@ namespace AvyyanBackend.Services
 				FullName = $"{user.FirstName} {user.LastName}",
 				RoleName = user.RoleName,
 				CreatedAt = DateTime.UtcNow,
-				ExpiresAt = DateTime.UtcNow.AddDays(7) // Refresh token valid for 7 days
+				ExpiresAt = DateTime.UtcNow.AddDays(1) // Refresh token valid for 7 days
 			};
 
 			_logger.LogInformation("User {Email} logged in successfully", loginDto.Email);
@@ -88,7 +88,7 @@ namespace AvyyanBackend.Services
 			{
 				Token = token,
 				RefreshToken = refreshToken,
-				ExpiresAt = DateTime.UtcNow.AddHours(1),
+				ExpiresAt = DateTime.UtcNow.AddDays(1),
 				User = authUser,
 				Roles = roles,
 				PageAccesses = _mapper.Map<IEnumerable<AuthPageAccessDto>>(permissions.PageAccesses)
@@ -144,7 +144,7 @@ namespace AvyyanBackend.Services
 				FullName = $"{user.FirstName} {user.LastName}",
 				RoleName = user.RoleName,
 				CreatedAt = DateTime.UtcNow,
-				ExpiresAt = DateTime.UtcNow.AddDays(7)
+				ExpiresAt = DateTime.UtcNow.AddDays(1)
 			};
 
 			_logger.LogInformation("Token refreshed successfully for user {Email}", user.Email);
@@ -153,7 +153,7 @@ namespace AvyyanBackend.Services
 			{
 				Token = token,
 				RefreshToken = newRefreshToken,
-				ExpiresAt = DateTime.UtcNow.AddHours(2),
+				ExpiresAt = DateTime.UtcNow.AddDays(1),
 				User = authUser,
 				Roles = roles,
 				PageAccesses = _mapper.Map<IEnumerable<AuthPageAccessDto>>(permissions.PageAccesses)
@@ -237,7 +237,7 @@ namespace AvyyanBackend.Services
 			var tokenDescriptor = new SecurityTokenDescriptor
 			{
 				Subject = new ClaimsIdentity(claims),
-				Expires = DateTime.UtcNow.AddHours(1),
+				Expires = DateTime.UtcNow.AddDays(1),
 				SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
 				Issuer = jwtSettings["Issuer"],
 				Audience = jwtSettings["Audience"]

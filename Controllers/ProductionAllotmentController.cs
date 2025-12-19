@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿using AutoMapper;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AutoMapper;
 using AvyyanBackend.Data;
 using AvyyanBackend.DTOs.ProAllotDto;
 using AvyyanBackend.Models.ProAllot;
@@ -426,10 +426,23 @@ namespace AvyyanBackend.Controllers
 					}
 				}
 				
-				// Use company name from SalesOrderWeb if available
-				if (salesOrderWeb != null)
+				// Use company name from SalesOrderWeb if available and matches "Avyaan Knitfab" (case insensitive)
+				if (salesOrderWeb != null && !string.IsNullOrWhiteSpace(salesOrderWeb.CompanyName))
 				{
-					companyName = salesOrderWeb.CompanyName?.Trim() ?? "AVYAAN KNITFAB";
+					// Check if company name contains "Avyaan Knitfab" (case insensitive)
+					if (salesOrderWeb.CompanyName.IndexOf("Avyaan Knitfab", StringComparison.OrdinalIgnoreCase) >= 0)
+					{
+						companyName = "AVYAAN KNITFAB"; // Print in uppercase
+					}
+					else
+					{
+						companyName = ""; // Don't print any company name
+					}
+				}
+				else
+				{
+					// If no company name found, don't print any company name
+					companyName = "";
 				}
 
 				// Prepare customer name (split at word boundaries for the two customer fields)
@@ -456,13 +469,49 @@ namespace AvyyanBackend.Controllers
 					customer2 = customerName.Substring(splitIndex).Trim();
 				}
 
+				// Prepare yarn count (split at word boundaries for the two yarn count fields)
+				string yarnCount = productionAllotment.YarnCount?.Trim() ?? "";
+				string yarnCount1 = yarnCount;
+				string yarnCount2 = "";
+
+				// If yarn count is long, split it between the two fields at word boundaries
+				if (yarnCount.Length > 20)
+				{
+					// Find the last space within the first 20 characters
+					int splitIndex = yarnCount.Substring(0, 20).LastIndexOf(' ');
+
+					// If no space found or it's at the beginning, split at position 20
+					if (splitIndex <= 0)
+					{
+						splitIndex = 20;
+					}
+
+					yarnCount1 = yarnCount.Substring(0, splitIndex).Trim();
+					yarnCount2 = yarnCount.Substring(splitIndex).Trim();
+				}
+
+				// Prepare fabric type (split at word boundaries for the two fabric type fields)
+				string fabricType = productionAllotment.FabricType?.Trim() ?? "";
+				string fabricType1 = fabricType;
+				string fabricType2 = "";
+
+				// If fabric type is long, split it between the two fields at word boundaries
+				// As per requirement, split first 9 characters for fabricType1 and remaining for fabricType2
+				if (fabricType.Length > 9)
+				{
+					fabricType1 = fabricType.Substring(0, 9).Trim();
+					fabricType2 = fabricType.Substring(9).Trim();
+				}
+
 				// Replace placeholders with actual values from roll confirmation and related data
 				string currentFileContent = fileContent
 					.Replace("<CompanyName>", companyName)
 					.Replace("<CUSTOMER1>", customer1)
 					.Replace("<CUSTOMER2>", customer2)
 					.Replace("<MCCODE>", rollConfirmation.MachineName.Trim())
-					.Replace("<YCOUNT>", productionAllotment.YarnCount?.Trim() ?? "")
+					.Replace("<YCOUNT>", yarnCount)
+					.Replace("<YARNCOUNT1>", yarnCount1)
+					.Replace("<YARNCOUNT2>", yarnCount2)
 					.Replace("<DIAGG>", $"{productionAllotment.Diameter} X {productionAllotment.Gauge}")
 					.Replace("<STICHLEN>", productionAllotment.StitchLength.ToString())
 					.Replace("<FGSM>", rollConfirmation.GreyGsm.ToString("F2"))
@@ -474,7 +523,9 @@ namespace AvyyanBackend.Controllers
 					.Replace("<LCODE>", rollConfirmation.AllotId.Trim())
 					.Replace("<ROLLNO>", rollConfirmation.RollNo.Trim())
 					.Replace("<FGROLLNO>", rollConfirmation.FgRollNo?.ToString() ?? rollConfirmation.RollNo.Trim()) // Use FG Roll No if available
-					.Replace("<FEBTYP>", productionAllotment.FabricType?.Trim() ?? "")
+					.Replace("<FEBTYP>", fabricType) // Full fabric type
+					.Replace("<FEBTYP1>", fabricType1) // First part of fabric type
+					.Replace("<FEBTYP2>", fabricType2) // Second part of fabric type
 					.Replace("<COMP>", productionAllotment.Composition?.Trim() ?? "");
 
 				// Send to printer
@@ -563,10 +614,23 @@ namespace AvyyanBackend.Controllers
 							}
 						}
 						
-						// Use company name from SalesOrderWeb if available
-						if (salesOrderWeb != null)
+						// Use company name from SalesOrderWeb if available and matches "Avyaan Knitfab" (case insensitive)
+						if (salesOrderWeb != null && !string.IsNullOrWhiteSpace(salesOrderWeb.CompanyName))
 						{
-							companyName = salesOrderWeb.CompanyName?.Trim() ?? "AVYAAN KNITFAB";
+							// Check if company name contains "Avyaan Knitfab" (case insensitive)
+							if (salesOrderWeb.CompanyName.IndexOf("Avyaan Knitfab", StringComparison.OrdinalIgnoreCase) >= 0)
+							{
+								companyName = "AVYAAN KNITFAB"; // Print in uppercase
+							}
+							else
+							{
+								companyName = ""; // Don't print any company name
+							}
+						}
+						else
+						{
+							// If no company name found, don't print any company name
+							companyName = "";
 						}
 
 						// Prepare customer name (split at word boundaries for the two customer fields)
@@ -593,13 +657,49 @@ namespace AvyyanBackend.Controllers
 							customer2 = customerName.Substring(splitIndex).Trim();
 						}
 
+						// Prepare yarn count (split at word boundaries for the two yarn count fields)
+						string yarnCount = productionAllotment.YarnCount?.Trim() ?? "";
+						string yarnCount1 = yarnCount;
+						string yarnCount2 = "";
+
+						// If yarn count is long, split it between the two fields at word boundaries
+						if (yarnCount.Length > 20)
+						{
+							// Find the last space within the first 20 characters
+							int splitIndex = yarnCount.Substring(0, 20).LastIndexOf(' ');
+
+							// If no space found or it's at the beginning, split at position 20
+							if (splitIndex <= 0)
+							{
+								splitIndex = 20;
+							}
+
+							yarnCount1 = yarnCount.Substring(0, splitIndex).Trim();
+							yarnCount2 = yarnCount.Substring(splitIndex).Trim();
+						}
+
+						// Prepare fabric type (split at word boundaries for the two fabric type fields)
+						string fabricType = productionAllotment.FabricType?.Trim() ?? "";
+						string fabricType1 = fabricType;
+						string fabricType2 = "";
+
+						// If fabric type is long, split it between the two fields at word boundaries
+						// As per requirement, split first 9 characters for fabricType1 and remaining for fabricType2
+						if (fabricType.Length > 9)
+						{
+							fabricType1 = fabricType.Substring(0, 9).Trim();
+							fabricType2 = fabricType.Substring(9).Trim();
+						}
+
 						// Replace placeholders with actual values from roll confirmation and related data
 						string currentFileContent = fileContent
 							.Replace("<CompanyName>", companyName)
 							.Replace("<CUSTOMER1>", customer1)
 							.Replace("<CUSTOMER2>", customer2)
 							.Replace("<MCCODE>", rollConfirmation.MachineName.Trim())
-							.Replace("<YCOUNT>", productionAllotment.YarnCount?.Trim() ?? "")
+							.Replace("<YCOUNT>", yarnCount)
+							.Replace("<YARNCOUNT1>", yarnCount1)
+							.Replace("<YARNCOUNT2>", yarnCount2)
 							.Replace("<DIAGG>", $"{productionAllotment.Diameter} X {productionAllotment.Gauge}")
 							.Replace("<STICHLEN>", productionAllotment.StitchLength.ToString())
 							.Replace("<FGSM>", rollConfirmation.GreyGsm.ToString("F2"))
@@ -611,7 +711,9 @@ namespace AvyyanBackend.Controllers
 							.Replace("<LCODE>", rollConfirmation.AllotId.Trim())
 							.Replace("<ROLLNO>", rollConfirmation.RollNo.Trim())
 							.Replace("<FGROLLNO>", rollConfirmation.FgRollNo?.ToString() ?? rollConfirmation.RollNo.Trim()) // Use FG Roll No if available
-							.Replace("<FEBTYP>", productionAllotment.FabricType?.Trim() ?? "")
+							.Replace("<FEBTYP>", fabricType) // Full fabric type
+							.Replace("<FEBTYP1>", fabricType1) // First part of fabric type
+							.Replace("<FEBTYP2>", fabricType2) // Second part of fabric type
 							.Replace("<COMP>", productionAllotment.Composition?.Trim() ?? "");
 
 						// Send to printer
@@ -807,6 +909,153 @@ namespace AvyyanBackend.Controllers
 
 			// Format as 4-digit zero-padded string
 			return nextNumber.ToString("D4");
+		}
+
+		// PUT api/productionallotment/machine-allocations/{allotmentId}
+		[HttpPut("machine-allocations/{allotmentId}")]
+		public async Task<IActionResult> UpdateMachineAllocations(string allotmentId, [FromBody] AvyyanBackend.DTOs.ProAllotDto.UpdateMachineAllocationsRequest request)
+		{
+			try
+			{
+				// Validate request
+				if (!ModelState.IsValid)
+					return BadRequest(ModelState);
+
+				// Find the production allotment by AllotmentId
+				var productionAllotment = await _context.ProductionAllotments
+					.Include(pa => pa.MachineAllocations)
+					.FirstOrDefaultAsync(pa => pa.AllotmentId == allotmentId);
+
+				if (productionAllotment == null)
+				{
+					return NotFound($"Production allotment with ID {allotmentId} not found.");
+				}
+
+				// Check if the total allocated rolls matches the actual quantity
+				// var totalAllocatedRolls = request.MachineAllocations.Sum(ma => ma.TotalRolls);
+				// if (Math.Abs(totalAllocatedRolls - productionAllotment.ActualQuantity) > 0.01m)
+				// {
+				// 	return BadRequest($"Total allocated rolls ({totalAllocatedRolls}) must exactly match actual quantity ({productionAllotment.ActualQuantity})");
+				// }
+
+				// Update machine allocations
+				// First, remove existing allocations that are not in the request
+				var existingMachineIds = request.MachineAllocations.Where(ma => ma.Id.HasValue).Select(ma => ma.Id.Value).ToList();
+				var allocationsToRemove = productionAllotment.MachineAllocations
+					.Where(ma => !existingMachineIds.Contains(ma.Id))
+					.ToList();
+
+				foreach (var allocation in allocationsToRemove)
+				{
+					_context.MachineAllocations.Remove(allocation);
+				}
+
+				// Update existing allocations or add new ones
+				foreach (var requestAllocation in request.MachineAllocations)
+				{
+					MachineAllocation dbAllocation;
+
+					if (requestAllocation.Id.HasValue)
+					{
+						// Update existing allocation
+						dbAllocation = productionAllotment.MachineAllocations
+							.FirstOrDefault(ma => ma.Id == requestAllocation.Id.Value);
+
+						if (dbAllocation == null)
+						{
+							return BadRequest($"Machine allocation with ID {requestAllocation.Id.Value} not found.");
+						}
+					}
+					else
+					{
+						// Add new allocation
+						dbAllocation = new MachineAllocation
+						{
+							ProductionAllotmentId = productionAllotment.Id
+						};
+						productionAllotment.MachineAllocations.Add(dbAllocation);
+						_context.MachineAllocations.Add(dbAllocation);
+					}
+
+					// Update allocation properties
+					dbAllocation.MachineName = requestAllocation.MachineName;
+					dbAllocation.MachineId = requestAllocation.MachineId;
+					dbAllocation.NumberOfNeedles = requestAllocation.NumberOfNeedles;
+					dbAllocation.Feeders = requestAllocation.Feeders;
+					dbAllocation.RPM = requestAllocation.RPM;
+					dbAllocation.RollPerKg = requestAllocation.RollPerKg;
+					dbAllocation.TotalLoadWeight = requestAllocation.TotalLoadWeight;
+					dbAllocation.TotalRolls = requestAllocation.TotalRolls;
+					dbAllocation.RollBreakdown = System.Text.Json.JsonSerializer.Serialize(requestAllocation.RollBreakdown);
+					dbAllocation.EstimatedProductionTime = requestAllocation.EstimatedProductionTime;
+				}
+
+				// Update the total production time
+				productionAllotment.TotalProductionTime = productionAllotment.MachineAllocations.Sum(ma => ma.EstimatedProductionTime);
+
+				// Save changes
+				await _context.SaveChangesAsync();
+
+				// Return updated production allotment
+				var responseDto = new ProductionAllotmentResponseDto
+				{
+					Id = productionAllotment.Id,
+					AllotmentId = productionAllotment.AllotmentId,
+					VoucherNumber = productionAllotment.VoucherNumber,
+					ItemName = productionAllotment.ItemName,
+					SalesOrderId = productionAllotment.SalesOrderId,
+					SalesOrderItemId = productionAllotment.SalesOrderItemId,
+					ActualQuantity = productionAllotment.ActualQuantity,
+					YarnCount = productionAllotment.YarnCount,
+					Diameter = productionAllotment.Diameter,
+					Gauge = productionAllotment.Gauge,
+					FabricType = productionAllotment.FabricType,
+					SlitLine = productionAllotment.SlitLine,
+					StitchLength = productionAllotment.StitchLength,
+					Efficiency = productionAllotment.Efficiency,
+					Composition = productionAllotment.Composition,
+					TotalProductionTime = productionAllotment.TotalProductionTime,
+					CreatedDate = productionAllotment.CreatedDate,
+					YarnLotNo = productionAllotment.YarnLotNo,
+					Counter = productionAllotment.Counter,
+					ColourCode = productionAllotment.ColourCode,
+					ReqGreyGsm = productionAllotment.ReqGreyGsm,
+					ReqGreyWidth = productionAllotment.ReqGreyWidth,
+					ReqFinishGsm = productionAllotment.ReqFinishGsm,
+					ReqFinishWidth = productionAllotment.ReqFinishWidth,
+					PartyName = productionAllotment.PartyName,
+					OtherReference = productionAllotment.OtherReference,
+					TubeWeight = productionAllotment.TubeWeight,
+					ShrinkRapWeight = productionAllotment.ShrinkRapWeight,
+					TotalWeight = productionAllotment.TotalWeight,
+					TapeColor = productionAllotment.TapeColor,
+					SerialNo = productionAllotment.SerialNo,
+					MachineAllocations = productionAllotment.MachineAllocations.Select(ma => new MachineAllocationResponseDto
+					{
+						Id = ma.Id,
+						ProductionAllotmentId = ma.ProductionAllotmentId,
+						MachineName = ma.MachineName,
+						MachineId = ma.MachineId,
+						NumberOfNeedles = ma.NumberOfNeedles,
+						Feeders = ma.Feeders,
+						RPM = ma.RPM,
+						RollPerKg = ma.RollPerKg,
+						TotalLoadWeight = ma.TotalLoadWeight,
+						TotalRolls = ma.TotalRolls,
+						RollBreakdown = !string.IsNullOrEmpty(ma.RollBreakdown)
+							? System.Text.Json.JsonSerializer.Deserialize<DTOs.ProAllotDto.RollBreakdown>(ma.RollBreakdown)
+							: new DTOs.ProAllotDto.RollBreakdown(),
+						EstimatedProductionTime = ma.EstimatedProductionTime
+					}).ToList()
+				};
+
+				return Ok(responseDto);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error updating machine allocations for production allotment: {AllotmentId}", allotmentId);
+				return StatusCode(500, $"Internal server error: {ex.Message}");
+			}
 		}
 	}
 }

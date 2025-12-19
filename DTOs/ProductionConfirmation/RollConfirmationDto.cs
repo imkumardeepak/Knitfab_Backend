@@ -13,6 +13,8 @@ namespace AvyyanBackend.DTOs.ProductionConfirmation
         [MaxLength(100)]
         public string MachineName { get; set; }
 
+        // Removed MachineRollNo field since we'll use RollNo for this purpose
+
         [Required]
         [Column(TypeName = "decimal(18,3)")]
         public decimal RollPerKg { get; set; }
@@ -69,6 +71,7 @@ namespace AvyyanBackend.DTOs.ProductionConfirmation
         public int Id { get; set; }
         public string AllotId { get; set; }
         public string MachineName { get; set; }
+        // Removed MachineRollNo field since we'll use RollNo for this purpose
         public decimal RollPerKg { get; set; }
         public decimal GreyGsm { get; set; }
         public decimal GreyWidth { get; set; }
