@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AutoMapper;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AutoMapper;
 using AvyyanBackend.Data;
 using AvyyanBackend.DTOs.ProAllotDto;
 using AvyyanBackend.Models.ProAllot;
@@ -909,6 +909,153 @@ namespace AvyyanBackend.Controllers
 
 			// Format as 4-digit zero-padded string
 			return nextNumber.ToString("D4");
+		}
+
+		// PUT api/productionallotment/machine-allocations/{allotmentId}
+		[HttpPut("machine-allocations/{allotmentId}")]
+		public async Task<IActionResult> UpdateMachineAllocations(string allotmentId, [FromBody] AvyyanBackend.DTOs.ProAllotDto.UpdateMachineAllocationsRequest request)
+		{
+			try
+			{
+				// Validate request
+				if (!ModelState.IsValid)
+					return BadRequest(ModelState);
+
+				// Find the production allotment by AllotmentId
+				var productionAllotment = await _context.ProductionAllotments
+					.Include(pa => pa.MachineAllocations)
+					.FirstOrDefaultAsync(pa => pa.AllotmentId == allotmentId);
+
+				if (productionAllotment == null)
+				{
+					return NotFound($"Production allotment with ID {allotmentId} not found.");
+				}
+
+				// Check if the total allocated rolls matches the actual quantity
+				// var totalAllocatedRolls = request.MachineAllocations.Sum(ma => ma.TotalRolls);
+				// if (Math.Abs(totalAllocatedRolls - productionAllotment.ActualQuantity) > 0.01m)
+				// {
+				// 	return BadRequest($"Total allocated rolls ({totalAllocatedRolls}) must exactly match actual quantity ({productionAllotment.ActualQuantity})");
+				// }
+
+				// Update machine allocations
+				// First, remove existing allocations that are not in the request
+				var existingMachineIds = request.MachineAllocations.Where(ma => ma.Id.HasValue).Select(ma => ma.Id.Value).ToList();
+				var allocationsToRemove = productionAllotment.MachineAllocations
+					.Where(ma => !existingMachineIds.Contains(ma.Id))
+					.ToList();
+
+				foreach (var allocation in allocationsToRemove)
+				{
+					_context.MachineAllocations.Remove(allocation);
+				}
+
+				// Update existing allocations or add new ones
+				foreach (var requestAllocation in request.MachineAllocations)
+				{
+					MachineAllocation dbAllocation;
+
+					if (requestAllocation.Id.HasValue)
+					{
+						// Update existing allocation
+						dbAllocation = productionAllotment.MachineAllocations
+							.FirstOrDefault(ma => ma.Id == requestAllocation.Id.Value);
+
+						if (dbAllocation == null)
+						{
+							return BadRequest($"Machine allocation with ID {requestAllocation.Id.Value} not found.");
+						}
+					}
+					else
+					{
+						// Add new allocation
+						dbAllocation = new MachineAllocation
+						{
+							ProductionAllotmentId = productionAllotment.Id
+						};
+						productionAllotment.MachineAllocations.Add(dbAllocation);
+						_context.MachineAllocations.Add(dbAllocation);
+					}
+
+					// Update allocation properties
+					dbAllocation.MachineName = requestAllocation.MachineName;
+					dbAllocation.MachineId = requestAllocation.MachineId;
+					dbAllocation.NumberOfNeedles = requestAllocation.NumberOfNeedles;
+					dbAllocation.Feeders = requestAllocation.Feeders;
+					dbAllocation.RPM = requestAllocation.RPM;
+					dbAllocation.RollPerKg = requestAllocation.RollPerKg;
+					dbAllocation.TotalLoadWeight = requestAllocation.TotalLoadWeight;
+					dbAllocation.TotalRolls = requestAllocation.TotalRolls;
+					dbAllocation.RollBreakdown = System.Text.Json.JsonSerializer.Serialize(requestAllocation.RollBreakdown);
+					dbAllocation.EstimatedProductionTime = requestAllocation.EstimatedProductionTime;
+				}
+
+				// Update the total production time
+				productionAllotment.TotalProductionTime = productionAllotment.MachineAllocations.Sum(ma => ma.EstimatedProductionTime);
+
+				// Save changes
+				await _context.SaveChangesAsync();
+
+				// Return updated production allotment
+				var responseDto = new ProductionAllotmentResponseDto
+				{
+					Id = productionAllotment.Id,
+					AllotmentId = productionAllotment.AllotmentId,
+					VoucherNumber = productionAllotment.VoucherNumber,
+					ItemName = productionAllotment.ItemName,
+					SalesOrderId = productionAllotment.SalesOrderId,
+					SalesOrderItemId = productionAllotment.SalesOrderItemId,
+					ActualQuantity = productionAllotment.ActualQuantity,
+					YarnCount = productionAllotment.YarnCount,
+					Diameter = productionAllotment.Diameter,
+					Gauge = productionAllotment.Gauge,
+					FabricType = productionAllotment.FabricType,
+					SlitLine = productionAllotment.SlitLine,
+					StitchLength = productionAllotment.StitchLength,
+					Efficiency = productionAllotment.Efficiency,
+					Composition = productionAllotment.Composition,
+					TotalProductionTime = productionAllotment.TotalProductionTime,
+					CreatedDate = productionAllotment.CreatedDate,
+					YarnLotNo = productionAllotment.YarnLotNo,
+					Counter = productionAllotment.Counter,
+					ColourCode = productionAllotment.ColourCode,
+					ReqGreyGsm = productionAllotment.ReqGreyGsm,
+					ReqGreyWidth = productionAllotment.ReqGreyWidth,
+					ReqFinishGsm = productionAllotment.ReqFinishGsm,
+					ReqFinishWidth = productionAllotment.ReqFinishWidth,
+					PartyName = productionAllotment.PartyName,
+					OtherReference = productionAllotment.OtherReference,
+					TubeWeight = productionAllotment.TubeWeight,
+					ShrinkRapWeight = productionAllotment.ShrinkRapWeight,
+					TotalWeight = productionAllotment.TotalWeight,
+					TapeColor = productionAllotment.TapeColor,
+					SerialNo = productionAllotment.SerialNo,
+					MachineAllocations = productionAllotment.MachineAllocations.Select(ma => new MachineAllocationResponseDto
+					{
+						Id = ma.Id,
+						ProductionAllotmentId = ma.ProductionAllotmentId,
+						MachineName = ma.MachineName,
+						MachineId = ma.MachineId,
+						NumberOfNeedles = ma.NumberOfNeedles,
+						Feeders = ma.Feeders,
+						RPM = ma.RPM,
+						RollPerKg = ma.RollPerKg,
+						TotalLoadWeight = ma.TotalLoadWeight,
+						TotalRolls = ma.TotalRolls,
+						RollBreakdown = !string.IsNullOrEmpty(ma.RollBreakdown)
+							? System.Text.Json.JsonSerializer.Deserialize<DTOs.ProAllotDto.RollBreakdown>(ma.RollBreakdown)
+							: new DTOs.ProAllotDto.RollBreakdown(),
+						EstimatedProductionTime = ma.EstimatedProductionTime
+					}).ToList()
+				};
+
+				return Ok(responseDto);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error updating machine allocations for production allotment: {AllotmentId}", allotmentId);
+				return StatusCode(500, $"Internal server error: {ex.Message}");
+			}
 		}
 	}
 }

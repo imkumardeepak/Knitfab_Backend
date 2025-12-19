@@ -1,4 +1,4 @@
-﻿﻿﻿using AvyyanBackend.Models.ProAllot;
+﻿﻿using AvyyanBackend.Models.ProAllot;
 using System.ComponentModel.DataAnnotations;
 
 namespace AvyyanBackend.DTOs.ProAllotDto
@@ -43,6 +43,7 @@ namespace AvyyanBackend.DTOs.ProAllotDto
 
 	public class MachineAllocationRequest
 	{
+		public int? Id { get; set; } // Optional ID for updates
 		public string MachineName { get; set; }
 		public int MachineId { get; set; }
 		public int NumberOfNeedles { get; set; }
@@ -53,6 +54,12 @@ namespace AvyyanBackend.DTOs.ProAllotDto
 		public decimal TotalRolls { get; set; }
 		public RollBreakdown RollBreakdown { get; set; }
 		public decimal EstimatedProductionTime { get; set; }
+	}
+
+	// New DTO for updating machine allocations
+	public class UpdateMachineAllocationsRequest
+	{
+		public List<MachineAllocationRequest> MachineAllocations { get; set; }
 	}
 
 	public class RollBreakdown
