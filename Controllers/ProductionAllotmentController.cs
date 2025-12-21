@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AutoMapper;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AutoMapper;
 using AvyyanBackend.Data;
 using AvyyanBackend.DTOs.ProAllotDto;
 using AvyyanBackend.Models.ProAllot;
@@ -212,6 +212,110 @@ namespace AvyyanBackend.Controllers
 			catch (Exception ex)
 			{
 				_logger.LogError(ex, "Error fetching production allotments");
+				return StatusCode(500, $"Internal server error: {ex.Message}");
+			}
+		}
+
+		// Add this new DTO for search requests
+		public class ProductionAllotmentSearchRequestDto
+		{
+			public string VoucherNumber { get; set; }
+			public DateTime? FromDate { get; set; }
+			public DateTime? ToDate { get; set; }
+		}
+
+		// Add this new endpoint after the GetAllProductionAllotments method
+		// GET api/productionallotment/search
+		[HttpGet("search")]
+		public async Task<ActionResult<IEnumerable<ProductionAllotmentResponseDto>>> SearchProductionAllotments(
+			[FromQuery] string voucherNumber = null,
+			[FromQuery] DateTime? fromDate = null,
+			[FromQuery] DateTime? toDate = null)
+		{
+			try
+			{
+				var query = _context.ProductionAllotments
+					.Include(pa => pa.MachineAllocations)
+					.AsQueryable();
+
+				// Apply voucher number filter if provided
+				if (!string.IsNullOrEmpty(voucherNumber))
+				{
+					query = query.Where(pa => pa.VoucherNumber.Contains(voucherNumber));
+				}
+
+				// Apply date filters if provided
+				if (fromDate.HasValue)
+				{
+					query = query.Where(pa => pa.CreatedDate >= fromDate.Value);
+				}
+
+				if (toDate.HasValue)
+				{
+					// Include the entire end date by setting time to end of day
+					var endDate = toDate.Value.Date.AddDays(1).AddTicks(-1);
+					query = query.Where(pa => pa.CreatedDate <= endDate);
+				}
+
+				var productionAllotments = await query.ToListAsync();
+
+				var responseDtos = productionAllotments.Select(pa => new ProductionAllotmentResponseDto
+				{
+					Id = pa.Id,
+					AllotmentId = pa.AllotmentId,
+					VoucherNumber = pa.VoucherNumber,
+					ItemName = pa.ItemName,
+					SalesOrderId = pa.SalesOrderId,
+					SalesOrderItemId = pa.SalesOrderItemId,
+					ActualQuantity = pa.ActualQuantity,
+					YarnCount = pa.YarnCount,
+					Diameter = pa.Diameter,
+					Gauge = pa.Gauge,
+					FabricType = pa.FabricType,
+					SlitLine = pa.SlitLine,
+					StitchLength = pa.StitchLength,
+					Efficiency = pa.Efficiency,
+					Composition = pa.Composition,
+					TotalProductionTime = pa.MachineAllocations.Sum(ma => ma.EstimatedProductionTime),
+					CreatedDate = pa.CreatedDate,
+					YarnLotNo = pa.YarnLotNo,
+					Counter = pa.Counter,
+					ColourCode = pa.ColourCode,
+					ReqGreyGsm = pa.ReqGreyGsm,
+					ReqGreyWidth = pa.ReqGreyWidth,
+					ReqFinishGsm = pa.ReqFinishGsm,
+					ReqFinishWidth = pa.ReqFinishWidth,
+					PartyName = pa.PartyName,
+					OtherReference = pa.OtherReference,
+					TubeWeight = pa.TubeWeight,
+					ShrinkRapWeight = pa.ShrinkRapWeight,
+					TotalWeight = pa.TotalWeight,
+					TapeColor = pa.TapeColor,
+					SerialNo = pa.SerialNo,
+					MachineAllocations = pa.MachineAllocations.Select(ma => new MachineAllocationResponseDto
+					{
+						Id = ma.Id,
+						ProductionAllotmentId = ma.ProductionAllotmentId,
+						MachineName = ma.MachineName,
+						MachineId = ma.MachineId,
+						NumberOfNeedles = ma.NumberOfNeedles,
+						Feeders = ma.Feeders,
+						RPM = ma.RPM,
+						RollPerKg = ma.RollPerKg,
+						TotalLoadWeight = ma.TotalLoadWeight,
+						TotalRolls = ma.TotalRolls,
+						RollBreakdown = !string.IsNullOrEmpty(ma.RollBreakdown)
+							? System.Text.Json.JsonSerializer.Deserialize<DTOs.ProAllotDto.RollBreakdown>(ma.RollBreakdown)
+							: new DTOs.ProAllotDto.RollBreakdown(),
+						EstimatedProductionTime = ma.EstimatedProductionTime
+					}).ToList()
+				});
+
+				return Ok(responseDtos);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error searching production allotments");
 				return StatusCode(500, $"Internal server error: {ex.Message}");
 			}
 		}
