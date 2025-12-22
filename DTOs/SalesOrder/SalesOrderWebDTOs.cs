@@ -43,6 +43,11 @@ namespace AvyyanBackend.DTOs.SalesOrder
         
         // Other Reference field
         public string? OtherReference { get; set; } = string.Empty;
+        
+        // Additional fields
+        public string OrderNo { get; set; } = string.Empty;
+        public string TermsOfDelivery { get; set; } = string.Empty;
+        public string DispatchThrough { get; set; } = string.Empty;
 
         // New fields for totals
         public decimal TotalQuantity { get; set; }
@@ -91,6 +96,8 @@ namespace AvyyanBackend.DTOs.SalesOrder
         public string Remarks { get; set; } = string.Empty;
         
         // New fields
+        public string? Hsncode { get; set; }
+        public string? Unit { get; set; }
         public string? SlitLine { get; set; }
         public string? StitchLength { get; set; }
         public DateTime? DueDate { get; set; }
@@ -244,12 +251,17 @@ namespace AvyyanBackend.DTOs.SalesOrder
         
         // New fields
         [MaxLength(50)]
+        public string? Unit { get; set; }
+        
+        [MaxLength(50)]
         public string? SlitLine { get; set; }
         
         [MaxLength(50)]
         public string? StitchLength { get; set; }
         
         public DateTime? DueDate { get; set; }
+        
+        public bool IsProcess { get; set; } = false;
     }
 
     // Request DTO for updating SalesOrderWeb
@@ -398,11 +410,16 @@ namespace AvyyanBackend.DTOs.SalesOrder
         
         // New fields
         [MaxLength(50)]
+        public string? Unit { get; set; }
+        
+        [MaxLength(50)]
         public string? SlitLine { get; set; }
         
         [MaxLength(50)]
         public string? StitchLength { get; set; }
         
         public DateTime? DueDate { get; set; }
+        
+        public bool IsProcess { get; set; } = false;
     }
 }
