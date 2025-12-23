@@ -87,7 +87,7 @@ namespace AvyyanBackend.Repositories
                     if (existingItem != null)
                     {
                         existingItem.ItemName = item.ItemName;
-                        existingItem.ItemDescription = item.ItemDescription;
+                        existingItem.HSNCode = item.HSNCode;
                         existingItem.YarnCount = item.YarnCount;
                         existingItem.Dia = item.Dia;
                         existingItem.GG = item.GG;

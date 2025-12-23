@@ -136,8 +136,9 @@ namespace AvyyanBackend.Models
         [MaxLength(200)]
         public string ItemName { get; set; } = string.Empty;
 
-        [MaxLength(200)]
-        public string ItemDescription { get; set; } = string.Empty;
+        [StringLength(50)]
+        public string HSNCode { get; set; } = string.Empty;
+
 
         [MaxLength(50)]
         public string YarnCount { get; set; } = string.Empty;
