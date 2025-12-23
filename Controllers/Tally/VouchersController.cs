@@ -18,20 +18,17 @@ namespace TallyERPWebApi.Controllers
 		private readonly TallyService _tallyService;
 		private readonly PostTallyService _postTallyService;
 		private readonly ApplicationDbContext _context;
-		private readonly ISalesOrderService _salesOrderService;
 		
 		public VouchersController(
 			ILogger<VouchersController> logger, 
 			TallyService tallyService, 
 			PostTallyService postTallyService, 
-			ApplicationDbContext context,
-			ISalesOrderService salesOrderService)
+			ApplicationDbContext context)
 		{
 			_logger = logger;
 			_tallyService = tallyService;
 			_postTallyService = postTallyService;
 			_context = context;
-			_salesOrderService = salesOrderService;
 		}
 		
 		[HttpGet]
@@ -78,48 +75,48 @@ namespace TallyERPWebApi.Controllers
 				}
 
 				// Get existing voucher numbers in bulk for faster checking
-				var existingVoucherNumbers = await _context.SalesOrders
-					.Where(so => vouchers.Select(v => v.VoucherNumber).Contains(so.VoucherNumber))
-					.Select(so => so.VoucherNumber)
-					.ToListAsync();
+				//var existingVoucherNumbers = await _context.SalesOrders
+				//	.Where(so => vouchers.Select(v => v.VoucherNumber).Contains(so.VoucherNumber))
+				//	.Select(so => so.VoucherNumber)
+				//	.ToListAsync();
 
-				var newVouchers = new List<SalesOrder>();
-				int processedCount = 0;
-				int skippedCount = 0;
+				//var newVouchers = new List<SalesOrder>();
+				//int processedCount = 0;
+				//int skippedCount = 0;
 
-				foreach (var voucher in vouchers)
-				{
-					// Skip if voucher number already exists
-					if (existingVoucherNumbers.Contains(voucher.VoucherNumber))
-					{
-						skippedCount++;
-						continue;
-					}
+				//foreach (var voucher in vouchers)
+				//{
+				//	// Skip if voucher number already exists
+				//	if (existingVoucherNumbers.Contains(voucher.VoucherNumber))
+				//	{
+				//		skippedCount++;
+				//		continue;
+				//	}
 
-					var dbVoucher = VoucherMapper.MapToDatabaseModel(voucher);
-					if (dbVoucher != null)
-					{
-						newVouchers.Add(dbVoucher);
-						existingVoucherNumbers.Add(dbVoucher.VoucherNumber); // Prevent duplicates in same batch
-					}
+				//	var dbVoucher = VoucherMapper.MapToDatabaseModel(voucher);
+				//	if (dbVoucher != null)
+				//	{
+				//		newVouchers.Add(dbVoucher);
+				//		existingVoucherNumbers.Add(dbVoucher.VoucherNumber); // Prevent duplicates in same batch
+				//	}
 					
-				}
+				//}
 
-				if (newVouchers.Any())
-				{
-					await _context.SalesOrders.AddRangeAsync(newVouchers);
-					var savedCount = await _context.SaveChangesAsync();
-					processedCount = savedCount;
-				}
+				//if (newVouchers.Any())
+				//{
+				//	await _context.SalesOrders.AddRangeAsync(newVouchers);
+				//	var savedCount = await _context.SaveChangesAsync();
+				//	processedCount = savedCount;
+				//}
 
-				_logger.LogInformation("Voucher processing completed. Processed: {Processed}, Skipped: {Skipped}, Total: {Total}",
-					processedCount, skippedCount, vouchers.Count);
+				//_logger.LogInformation("Voucher processing completed. Processed: {Processed}, Skipped: {Skipped}, Total: {Total}",
+				//	processedCount, skippedCount, vouchers.Count);
 
 				// Return success response with company data
 				return Ok(new ApiResponse<List<Voucher>>
 				{
 					Success = true,
-					Message = $"Voucher processing completed. Processed: {processedCount}, Skipped: {skippedCount}, Total: {vouchers.Count}",
+					Message = $"Voucher processing completed. Processed: , Total: {vouchers.Count}",
 					Data = vouchers
 				});
 			}

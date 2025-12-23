@@ -83,42 +83,5 @@ public class TallyBackgroundService : BackgroundService
 			_logger.LogInformation("No vouchers found to process.");
 			return;
 		}
-
-		// Get existing voucher numbers in bulk for faster checking
-		var existingVoucherNumbers = await context.SalesOrders
-			.Where(so => vouchers.Select(v => v.VoucherNumber).Contains(so.VoucherNumber))
-			.Select(so => so.VoucherNumber)
-			.ToListAsync();
-
-		var newVouchers = new List<SalesOrder>();
-		int processedCount = 0;
-		int skippedCount = 0;
-
-		foreach (var voucher in vouchers)
-		{
-			// Skip if voucher number already exists
-			if (existingVoucherNumbers.Contains(voucher.VoucherNumber))
-			{
-				skippedCount++;
-				continue;
-			}
-
-			var dbVoucher = VoucherMapper.MapToDatabaseModel(voucher);
-			if (dbVoucher != null)
-			{
-				newVouchers.Add(dbVoucher);
-				existingVoucherNumbers.Add(dbVoucher.VoucherNumber);
-			}
-		}
-
-		if (newVouchers.Any())
-		{
-			await context.SalesOrders.AddRangeAsync(newVouchers);
-			var savedCount = await context.SaveChangesAsync();
-			processedCount = savedCount;
-		}
-
-		_logger.LogInformation("Voucher processing completed. Processed: {Processed}, Skipped: {Skipped}, Total: {Total}",
-			processedCount, skippedCount, vouchers.Count);
 	}
 }

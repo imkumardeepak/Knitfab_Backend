@@ -42,7 +42,6 @@ namespace AvyyanBackend.Extensions
             services.AddScoped<IFabricStructureService, FabricStructureService>();
             services.AddScoped<ILocationService, LocationService>();
             services.AddScoped<IYarnTypeService, YarnTypeService>();
-            services.AddScoped<ISalesOrderService, SalesOrderService>();
             services.AddScoped<ISalesOrderWebService, SalesOrderWebService>();
             services.AddScoped<ITapeColorService, TapeColorService>();
             services.AddScoped<IShiftService, ShiftService>();

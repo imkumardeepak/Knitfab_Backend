@@ -136,8 +136,8 @@ namespace AvyyanBackend.Services
             }
 
             // Update main sales order properties
-            _mapper.Map(updateSalesOrderWebDto, salesOrderWeb);
-            salesOrderWeb.UpdatedAt = DateTime.UtcNow;
+            //_mapper.Map(updateSalesOrderWebDto, salesOrderWeb);
+            //salesOrderWeb.UpdatedAt = DateTime.UtcNow;
 
             // Update items
             UpdateSalesOrderWebItems(salesOrderWeb, updateSalesOrderWebDto.Items);
@@ -213,10 +213,10 @@ namespace AvyyanBackend.Services
             {
                 await _context.SaveChangesAsync();
             }
-            
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                _logger.LogError(ex, "Error saving changes while marking sales order web item {SalesOrderItemWebId} as processed", salesOrderItemWebId);
+                throw; // Re-throw to let the controller handle it
             }
             
 

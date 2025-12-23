@@ -970,184 +970,6 @@ namespace AvyyanBackend.Migrations
                     b.ToTable("RoleMasters");
                 });
 
-            modelBuilder.Entity("AvyyanBackend.Models.SalesOrder", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("BuyerAddress")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("CompanyAddress")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<string>("GstRegistrationType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("Guid")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LedgerEntries")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("OrderTerms")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("PartyLedgerName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("PartyName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<DateTime>("ProcessDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("ProcessFlag")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Reference")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<DateTime>("SalesDate")
-                        .HasMaxLength(20)
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("StateName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<string>("VchType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("VoucherNumber")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PartyName");
-
-                    b.HasIndex("ProcessFlag");
-
-                    b.HasIndex("SalesDate");
-
-                    b.HasIndex("VoucherNumber")
-                        .IsUnique();
-
-                    b.ToTable("SalesOrders");
-                });
-
-            modelBuilder.Entity("AvyyanBackend.Models.SalesOrderItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ActualQty")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("Amount")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("BatchName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("BilledQty")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("Descriptions")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<string>("OrderDueDate")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("OrderNo")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<DateTime>("ProcessDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("ProcessFlag")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Rate")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<int>("SalesOrderId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("StockItemName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SalesOrderId");
-
-                    b.HasIndex("StockItemName");
-
-                    b.ToTable("SalesOrderItems");
-                });
-
             modelBuilder.Entity("AvyyanBackend.Models.SalesOrderItemWeb", b =>
                 {
                     b.Property<int>("Id")
@@ -1183,17 +1005,17 @@ namespace AvyyanBackend.Migrations
                     b.Property<int>("GG")
                         .HasColumnType("integer");
 
+                    b.Property<string>("HSNCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<decimal>("IGST")
                         .HasPrecision(18, 3)
                         .HasColumnType("numeric(18,3)");
 
                     b.Property<bool>("IsProcess")
                         .HasColumnType("boolean");
-
-                    b.Property<string>("ItemDescription")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("ItemName")
                         .IsRequired()
@@ -1380,7 +1202,6 @@ namespace AvyyanBackend.Migrations
                         .HasColumnType("character varying(200)");
 
                     b.Property<string>("TermsOfPayment")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -1834,17 +1655,6 @@ namespace AvyyanBackend.Migrations
                     b.Navigation("MachineAllocation");
                 });
 
-            modelBuilder.Entity("AvyyanBackend.Models.SalesOrderItem", b =>
-                {
-                    b.HasOne("AvyyanBackend.Models.SalesOrder", "Voucher")
-                        .WithMany("Items")
-                        .HasForeignKey("SalesOrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Voucher");
-                });
-
             modelBuilder.Entity("AvyyanBackend.Models.SalesOrderItemWeb", b =>
                 {
                     b.HasOne("AvyyanBackend.Models.SalesOrderWeb", "SalesOrderWeb")
@@ -1874,11 +1684,6 @@ namespace AvyyanBackend.Migrations
             modelBuilder.Entity("AvyyanBackend.Models.RoleMaster", b =>
                 {
                     b.Navigation("PageAccesses");
-                });
-
-            modelBuilder.Entity("AvyyanBackend.Models.SalesOrder", b =>
-                {
-                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("AvyyanBackend.Models.SalesOrderWeb", b =>

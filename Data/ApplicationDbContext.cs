@@ -35,9 +35,6 @@ namespace AvyyanBackend.Data
 		public DbSet<RoleMaster> RoleMasters { get; set; }
 		public DbSet<PageAccess> PageAccesses { get; set; }
 
-		public DbSet<SalesOrder> SalesOrders { get; set; }
-
-		public DbSet<SalesOrderItem> SalesOrderItems { get; set; }
 
 		public DbSet<ShiftMaster> ShiftMasters { get; set; }
 		public DbSet<StorageCapture> StorageCaptures { get; set; }
@@ -96,31 +93,6 @@ namespace AvyyanBackend.Data
 				.OnDelete(DeleteBehavior.Cascade);
 
 
-			modelBuilder.Entity<SalesOrder>()
-			.HasMany(v => v.Items)
-			.WithOne(i => i.Voucher)
-			.HasForeignKey(i => i.SalesOrderId)
-			.OnDelete(DeleteBehavior.Cascade);
-
-			// Add indexes for better performance
-			modelBuilder.Entity<SalesOrder>()
-				.HasIndex(v => v.VoucherNumber)
-				.IsUnique();
-
-			modelBuilder.Entity<SalesOrder>()
-				.HasIndex(v => v.SalesDate);
-
-			modelBuilder.Entity<SalesOrder>()
-				.HasIndex(v => v.PartyName);
-
-			modelBuilder.Entity<SalesOrder>()
-				.HasIndex(v => v.ProcessFlag);
-
-			modelBuilder.Entity<SalesOrderItem>()
-				.HasIndex(i => i.SalesOrderId);
-
-			modelBuilder.Entity<SalesOrderItem>()
-				.HasIndex(i => i.StockItemName);
 
 			// Configure relationships for SalesOrderWeb
 			modelBuilder.Entity<SalesOrderWeb>()

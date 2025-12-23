@@ -129,22 +129,7 @@ namespace AvyyanBackend.Extensions
 				.ForMember(dest => dest.CreatedAt, opt => opt.Ignore());
 
 			// Sales Order mappings
-			CreateMap<SalesOrder, SalesOrderResponseDto>();
-			CreateMap<SalesOrderItem, SalesOrderItemResponseDto>();
-			CreateMap<CreateSalesOrderRequestDto, SalesOrder>()
-				.ForMember(dest => dest.Id, opt => opt.Ignore())
-				.ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
-				.ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
-				.ForMember(dest => dest.ProcessDate, opt => opt.Ignore());
-			CreateMap<CreateSalesOrderItemRequestDto, SalesOrderItem>()
-				.ForMember(dest => dest.Id, opt => opt.Ignore())
-				.ForMember(dest => dest.SalesOrderId, opt => opt.Ignore());
-			CreateMap<UpdateSalesOrderRequestDto, SalesOrder>()
-				.ForMember(dest => dest.Id, opt => opt.Ignore())
-				.ForMember(dest => dest.CreatedAt, opt => opt.Ignore());
-			CreateMap<UpdateSalesOrderItemRequestDto, SalesOrderItem>()
-				.ForMember(dest => dest.Id, opt => opt.Ignore())
-				.ForMember(dest => dest.SalesOrderId, opt => opt.Ignore());
+		
 
 			// Sales Order Web mappings
 			CreateMap<SalesOrderWeb, SalesOrderWebResponseDto>();
