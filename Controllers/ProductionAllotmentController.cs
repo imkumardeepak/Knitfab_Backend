@@ -516,20 +516,6 @@ namespace AvyyanBackend.Controllers
 				var salesOrderWeb = _context.SalesOrdersWeb
 					.FirstOrDefault(sow => sow.Id == productionAllotment.SalesOrderId);
 				
-				// If SalesOrderWeb not found, try to find it through SalesOrder
-				if (salesOrderWeb == null)
-				{
-					var salesOrder = _context.SalesOrders
-						.FirstOrDefault(so => so.Id == productionAllotment.SalesOrderId);
-					
-					// Try to match by voucher number if available
-					if (salesOrder != null)
-					{
-						salesOrderWeb = _context.SalesOrdersWeb
-							.FirstOrDefault(sow => sow.VoucherNumber == salesOrder.VoucherNumber);
-					}
-				}
-				
 				// Use company name from SalesOrderWeb if available and matches "Avyaan Knitfab" (case insensitive)
 				if (salesOrderWeb != null && !string.IsNullOrWhiteSpace(salesOrderWeb.CompanyName))
 				{
@@ -704,19 +690,7 @@ namespace AvyyanBackend.Controllers
 						var salesOrderWeb = _context.SalesOrdersWeb
 							.FirstOrDefault(sow => sow.Id == productionAllotment.SalesOrderId);
 						
-						// If SalesOrderWeb not found, try to find it through SalesOrder
-						if (salesOrderWeb == null)
-						{
-							var salesOrder = _context.SalesOrders
-								.FirstOrDefault(so => so.Id == productionAllotment.SalesOrderId);
-							
-							// Try to match by voucher number if available
-							if (salesOrder != null)
-							{
-								salesOrderWeb = _context.SalesOrdersWeb
-									.FirstOrDefault(sow => sow.VoucherNumber == salesOrder.VoucherNumber);
-							}
-						}
+
 						
 						// Use company name from SalesOrderWeb if available and matches "Avyaan Knitfab" (case insensitive)
 						if (salesOrderWeb != null && !string.IsNullOrWhiteSpace(salesOrderWeb.CompanyName))

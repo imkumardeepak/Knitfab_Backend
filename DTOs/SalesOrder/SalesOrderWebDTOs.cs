@@ -130,6 +130,9 @@ namespace AvyyanBackend.DTOs.SalesOrder
         [MaxLength(50)]
         public string? SerialNo { get; set; }
 
+        // Process flag
+        public bool IsProcess { get; set; } = false;
+
         // Company details
         [Required]
         [MaxLength(200)]
@@ -286,6 +289,9 @@ namespace AvyyanBackend.DTOs.SalesOrder
         // Serial number field
         [MaxLength(50)]
         public string? SerialNo { get; set; }
+
+        // Process flag
+        public bool IsProcess { get; set; } = false;
 
         // Company details
         [Required]
