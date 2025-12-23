@@ -18,20 +18,17 @@ namespace TallyERPWebApi.Controllers
 		private readonly TallyService _tallyService;
 		private readonly PostTallyService _postTallyService;
 		private readonly ApplicationDbContext _context;
-		private readonly ISalesOrderService _salesOrderService;
 		
 		public VouchersController(
 			ILogger<VouchersController> logger, 
 			TallyService tallyService, 
 			PostTallyService postTallyService, 
-			ApplicationDbContext context,
-			ISalesOrderService salesOrderService)
+			ApplicationDbContext context)
 		{
 			_logger = logger;
 			_tallyService = tallyService;
 			_postTallyService = postTallyService;
 			_context = context;
-			_salesOrderService = salesOrderService;
 		}
 		
 		[HttpGet]

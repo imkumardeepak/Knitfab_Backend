@@ -75,7 +75,7 @@ namespace AvyyanBackend.DTOs.SalesOrder
 
         // Item details
         public string ItemName { get; set; } = string.Empty;
-        public string ItemDescription { get; set; } = string.Empty;
+        public string HSNCode { get; set; } = string.Empty;
         public string YarnCount { get; set; } = string.Empty;
         public int Dia { get; set; } = 0;
         public int GG { get; set; } = 0;
@@ -96,7 +96,6 @@ namespace AvyyanBackend.DTOs.SalesOrder
         public string Remarks { get; set; } = string.Empty;
         
         // New fields
-        public string? Hsncode { get; set; }
         public string? Unit { get; set; }
         public string? SlitLine { get; set; }
         public string? StitchLength { get; set; }
@@ -218,8 +217,8 @@ namespace AvyyanBackend.DTOs.SalesOrder
         [MaxLength(200)]
         public string ItemName { get; set; } = string.Empty;
 
-        [MaxLength(200)]
-        public string ItemDescription { get; set; } = string.Empty;
+        [StringLength(50)]
+        public string HSNCode { get; set; } = string.Empty;
 
         [MaxLength(50)]
         public string YarnCount { get; set; } = string.Empty;
@@ -380,8 +379,8 @@ namespace AvyyanBackend.DTOs.SalesOrder
         [MaxLength(200)]
         public string ItemName { get; set; } = string.Empty;
 
-        [MaxLength(200)]
-        public string ItemDescription { get; set; } = string.Empty;
+        [StringLength(50)]
+        public string HSNCode { get; set; } = string.Empty;
 
         [MaxLength(50)]
         public string YarnCount { get; set; } = string.Empty;
