@@ -79,6 +79,7 @@ namespace AvyyanBackend.Controllers
 			}
 		}
 
+
 		/// <summary>
 		/// Create a new storage capture
 		/// </summary>
