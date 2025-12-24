@@ -135,12 +135,14 @@ namespace AvyyanBackend.Services
                 updateSalesOrderWebDto.TotalAmount = updateSalesOrderWebDto.Items.Sum(item => item.Amount);
             }
 
-            // Update main sales order properties
-            //_mapper.Map(updateSalesOrderWebDto, salesOrderWeb);
-            //salesOrderWeb.UpdatedAt = DateTime.UtcNow;
+			// Update items
+			UpdateSalesOrderWebItems(salesOrderWeb, updateSalesOrderWebDto.Items);
 
-            // Update items
-            UpdateSalesOrderWebItems(salesOrderWeb, updateSalesOrderWebDto.Items);
+			// Update main sales order properties
+			_mapper.Map(updateSalesOrderWebDto, salesOrderWeb);
+            salesOrderWeb.UpdatedAt = DateTime.UtcNow;
+
+        
 
             _context.SalesOrdersWeb.Update(salesOrderWeb);
             await _context.SaveChangesAsync();
