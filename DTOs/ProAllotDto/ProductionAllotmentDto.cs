@@ -26,6 +26,8 @@ namespace AvyyanBackend.DTOs.ProAllotDto
 		public decimal? ReqGreyWidth { get; set; }
 		public decimal? ReqFinishGsm { get; set; }
 		public decimal? ReqFinishWidth { get; set; }
+		public string YarnPartyName { get; set; } // New field for yarn party name
+		public string PolybagColor { get; set; } // New field for polybag color
 		public string PartyName { get; set; }
 
 		// Other Reference field
@@ -102,6 +104,8 @@ namespace AvyyanBackend.DTOs.ProAllotDto
 		public decimal? ReqGreyWidth { get; set; }
 		public decimal? ReqFinishGsm { get; set; }
 		public decimal? ReqFinishWidth { get; set; }
+		public string YarnPartyName { get; set; } // New field for yarn party name
+		public string PolybagColor { get; set; } // New field for polybag color
 		public string PartyName { get; set; }
 
 		// Other Reference field

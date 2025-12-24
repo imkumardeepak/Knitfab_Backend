@@ -75,6 +75,12 @@ namespace AvyyanBackend.Models.ProAllot
 		[MaxLength(200)]
 		public string PartyName { get; set; }
 
+		[MaxLength(200)]
+		public string YarnPartyName { get; set; } // New field for yarn party name
+
+		[MaxLength(100)]
+		public string PolybagColor { get; set; } // New field for polybag color
+
 		// Packaging Details
 		[Column(TypeName = "decimal(18,3)")]
 		public decimal TubeWeight { get; set; }

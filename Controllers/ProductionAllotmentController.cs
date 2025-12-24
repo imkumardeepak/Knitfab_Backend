@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AutoMapper;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AutoMapper;
 using AvyyanBackend.Data;
 using AvyyanBackend.DTOs.ProAllotDto;
 using AvyyanBackend.Models.ProAllot;
@@ -113,6 +113,8 @@ namespace AvyyanBackend.Controllers
 					ReqGreyWidth = productionAllotment.ReqGreyWidth,
 					ReqFinishGsm = productionAllotment.ReqFinishGsm,
 					ReqFinishWidth = productionAllotment.ReqFinishWidth,
+					YarnPartyName = productionAllotment.YarnPartyName, // New field for yarn party name
+					PolybagColor = productionAllotment.PolybagColor, // New field for polybag color
 					PartyName = productionAllotment.PartyName,
 					OtherReference = productionAllotment.OtherReference,
 					TubeWeight = productionAllotment.TubeWeight,
@@ -184,8 +186,13 @@ namespace AvyyanBackend.Controllers
 					ReqGreyWidth = pa.ReqGreyWidth,
 					ReqFinishGsm = pa.ReqFinishGsm,
 					ReqFinishWidth = pa.ReqFinishWidth,
+					YarnPartyName = pa.YarnPartyName, // New field for yarn party name
+					PolybagColor = pa.PolybagColor, // New field for polybag color
 					PartyName = pa.PartyName,
+					OtherReference = pa.OtherReference,
 					TubeWeight = pa.TubeWeight,
+					ShrinkRapWeight = pa.ShrinkRapWeight,
+					TotalWeight = pa.TotalWeight,
 					TapeColor = pa.TapeColor,
 					SerialNo = pa.SerialNo,
 					MachineAllocations = pa.MachineAllocations.Select(ma => new MachineAllocationResponseDto
@@ -919,6 +926,8 @@ namespace AvyyanBackend.Controllers
 					ReqGreyWidth = request.ReqGreyWidth,
 					ReqFinishGsm = request.ReqFinishGsm,
 					ReqFinishWidth = request.ReqFinishWidth,
+					YarnPartyName = request.YarnPartyName, // New field for yarn party name
+					PolybagColor = request.PolybagColor, // New field for polybag color
 					PartyName = request.PartyName,
 					OtherReference = request.OtherReference,
 					TubeWeight = request.TubeWeight,
