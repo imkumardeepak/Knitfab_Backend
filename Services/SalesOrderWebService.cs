@@ -83,6 +83,16 @@ namespace AvyyanBackend.Services
             // Map items
             salesOrderWeb.Items = _mapper.Map<ICollection<SalesOrderItemWeb>>(createSalesOrderWebDto.Items);
 
+            // Set audit fields
+            salesOrderWeb.CreatedAt = DateTime.UtcNow;
+            salesOrderWeb.UpdatedAt = DateTime.UtcNow;
+            // CreatedBy should already be mapped from the DTO, but ensure it's set if needed
+            if (string.IsNullOrEmpty(salesOrderWeb.CreatedBy))
+            {
+                salesOrderWeb.CreatedBy = "System"; // Default value if not provided
+            }
+            salesOrderWeb.UpdatedBy = salesOrderWeb.CreatedBy; // Initially the same as created by
+
             _context.SalesOrdersWeb.Add(salesOrderWeb);
             await _context.SaveChangesAsync();
 
@@ -141,8 +151,11 @@ namespace AvyyanBackend.Services
 			// Update main sales order properties
 			_mapper.Map(updateSalesOrderWebDto, salesOrderWeb);
             salesOrderWeb.UpdatedAt = DateTime.UtcNow;
-
-        
+            // UpdatedBy should already be mapped from the DTO, but ensure it's set
+            if (string.IsNullOrEmpty(salesOrderWeb.UpdatedBy))
+            {
+                salesOrderWeb.UpdatedBy = "System"; // Default value if not provided
+            }
 
             _context.SalesOrdersWeb.Update(salesOrderWeb);
             await _context.SaveChangesAsync();

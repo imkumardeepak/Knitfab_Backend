@@ -137,13 +137,16 @@ namespace AvyyanBackend.Extensions
 			CreateMap<CreateSalesOrderWebRequestDto, SalesOrderWeb>()
 				.ForMember(dest => dest.Id, opt => opt.Ignore())
 				.ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
-				.ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());
+				.ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+				.ForMember(dest => dest.CreatedBy, opt => opt.MapFrom(src => src.CreatedBy))
+				.ForMember(dest => dest.UpdatedBy, opt => opt.MapFrom(src => src.CreatedBy)); // For new items, createdBy becomes updatedBy initially
 			CreateMap<CreateSalesOrderItemWebRequestDto, SalesOrderItemWeb>()
 				.ForMember(dest => dest.Id, opt => opt.Ignore())
 				.ForMember(dest => dest.SalesOrderWebId, opt => opt.Ignore());
 			CreateMap<UpdateSalesOrderWebRequestDto, SalesOrderWeb>()
 				.ForMember(dest => dest.Id, opt => opt.Ignore())
-				.ForMember(dest => dest.CreatedAt, opt => opt.Ignore());
+				.ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+				.ForMember(dest => dest.UpdatedBy, opt => opt.MapFrom(src => src.UpdatedBy));
 			CreateMap<UpdateSalesOrderItemWebRequestDto, SalesOrderItemWeb>()
 				.ForMember(dest => dest.Id, opt => opt.Ignore())
 				.ForMember(dest => dest.SalesOrderWebId, opt => opt.Ignore());

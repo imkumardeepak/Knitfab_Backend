@@ -205,6 +205,10 @@ namespace AvyyanBackend.DTOs.SalesOrder
         public decimal TotalQuantity { get; set; } = 0;
         public decimal TotalAmount { get; set; } = 0;
 
+        // Audit fields
+        [MaxLength(100)]
+        public string CreatedBy { get; set; } = string.Empty;
+
         // Items
         public ICollection<CreateSalesOrderItemWebRequestDto> Items { get; set; } = new List<CreateSalesOrderItemWebRequestDto>();
     }
@@ -364,6 +368,10 @@ namespace AvyyanBackend.DTOs.SalesOrder
         // New fields for totals
         public decimal TotalQuantity { get; set; } = 0;
         public decimal TotalAmount { get; set; } = 0;
+
+        // Audit fields
+        [MaxLength(100)]
+        public string UpdatedBy { get; set; } = string.Empty;
 
         // Items
         public ICollection<UpdateSalesOrderItemWebRequestDto> Items { get; set; } = new List<UpdateSalesOrderItemWebRequestDto>();
