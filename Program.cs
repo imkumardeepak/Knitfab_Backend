@@ -100,6 +100,8 @@ app.MapHub<WeightHub>("/weighthub"); // Add the WeightHub endpoint
 
 app.MapControllers();
 
+app.MapGet("/", () => "Welcome to the ASP.NET Core API!");
+
 // Ensure database is created and seeded (for development)
 if (app.Environment.IsDevelopment())
 {
