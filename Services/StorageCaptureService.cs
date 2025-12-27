@@ -100,13 +100,11 @@ namespace AvyyanBackend.Services
 				searchDto.LotNo, searchDto.FGRollNo);
 
 			var storageCaptures = await _storageCaptureRepository.FindAsync(m =>
-				(string.IsNullOrEmpty(searchDto.LotNo) || m.LotNo.Contains(searchDto.LotNo)) &&
-				(string.IsNullOrEmpty(searchDto.FGRollNo) || m.FGRollNo.Contains(searchDto.FGRollNo)) &&
-				(string.IsNullOrEmpty(searchDto.LocationCode) || m.LocationCode.Contains(searchDto.LocationCode)) &&
-				(string.IsNullOrEmpty(searchDto.Tape) || m.Tape.Contains(searchDto.Tape)) &&
-				(string.IsNullOrEmpty(searchDto.CustomerName) || m.CustomerName.Contains(searchDto.CustomerName)) &&
-				(!searchDto.IsActive.HasValue || m.IsActive == searchDto.IsActive.Value) &&
-				(!searchDto.IsDispatched.HasValue || m.IsDispatched == searchDto.IsDispatched.Value));
+				(string.IsNullOrEmpty(searchDto.LotNo) || m.LotNo==searchDto.LotNo )&&
+
+				(string.IsNullOrEmpty(searchDto.FGRollNo) || m.FGRollNo==searchDto.FGRollNo ))
+				
+				;
 
 			// Order by LotNo and FGRollNo as requested
 			var orderedStorageCaptures = storageCaptures.OrderBy(m => m.LotNo).ThenBy(m => m.FGRollNo).ToList();

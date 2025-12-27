@@ -108,6 +108,13 @@ namespace AvyyanBackend.Repositories
             return dispatchedRoll;
         }
 
+        public async Task<IEnumerable<DispatchedRoll>> CreateDispatchedRollsBulkAsync(IEnumerable<DispatchedRoll> dispatchedRolls)
+        {
+            _context.DispatchedRolls.AddRange(dispatchedRolls);
+            await _context.SaveChangesAsync();
+            return dispatchedRolls;
+        }
+
         public async Task<IEnumerable<DispatchedRoll>> GetDispatchedRollsByPlanningIdAsync(int planningId)
         {
             return await _context.DispatchedRolls

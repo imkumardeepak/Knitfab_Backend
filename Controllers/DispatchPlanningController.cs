@@ -91,6 +91,20 @@ namespace AvyyanBackend.Controllers
             }
         }
         
+        [HttpPost("dispatched-rolls/bulk")]
+        public async Task<ActionResult<IEnumerable<DispatchedRollDto>>> CreateDispatchedRollsBulk([FromBody] IEnumerable<DispatchedRollDto> dtos)
+        {
+            try
+            {
+                var dispatchedRolls = await _service.CreateDispatchedRollsBulkAsync(dtos);
+                return Ok(dispatchedRolls);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+        
         // New endpoint to update dispatch status based on roll counts
         [HttpPut("{id}/status")]
         public async Task<ActionResult<DispatchPlanningDto>> UpdateDispatchStatus(int id, [FromBody] decimal totalDispatchedRolls)
