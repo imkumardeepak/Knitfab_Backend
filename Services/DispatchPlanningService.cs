@@ -77,6 +77,19 @@ namespace AvyyanBackend.Services
             var created = await _repository.CreateDispatchedRollAsync(dispatchedRoll);
             return _mapper.Map<DispatchedRollDto>(created);
         }
+        
+        public async Task<IEnumerable<DispatchedRollDto>> CreateDispatchedRollsBulkAsync(IEnumerable<DispatchedRollDto> dtos)
+        {
+            var dispatchedRolls = _mapper.Map<IEnumerable<DispatchedRoll>>(dtos);
+            foreach (var roll in dispatchedRolls)
+            {
+                roll.CreatedAt = DateTime.UtcNow;
+                roll.IsActive = true;
+            }
+            
+            var created = await _repository.CreateDispatchedRollsBulkAsync(dispatchedRolls);
+            return _mapper.Map<IEnumerable<DispatchedRollDto>>(created);
+        }
 
         // New method to create dispatch planning from dispatch details
         public async Task<DispatchPlanningDto> CreateFromDispatchDetailsAsync(

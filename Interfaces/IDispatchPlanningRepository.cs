@@ -13,6 +13,7 @@ namespace AvyyanBackend.Interfaces
         Task<bool> DeleteAsync(int id);
         Task<IEnumerable<DispatchedRoll>> GetDispatchedRollsByPlanningIdAsync(int planningId);
         Task<DispatchedRoll> CreateDispatchedRollAsync(DispatchedRoll dispatchedRoll);
+        Task<IEnumerable<DispatchedRoll>> CreateDispatchedRollsBulkAsync(IEnumerable<DispatchedRoll> dispatchedRolls);
         Task<string> GenerateLoadingNoAsync();
         Task<string> GenerateDispatchOrderIdAsync();
     }
