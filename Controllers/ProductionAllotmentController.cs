@@ -122,6 +122,8 @@ namespace AvyyanBackend.Controllers
 					TotalWeight = productionAllotment.TotalWeight,
 					TapeColor = productionAllotment.TapeColor,
 					SerialNo = productionAllotment.SerialNo,
+					IsOnHold = productionAllotment.IsOnHold,
+					IsSuspended = productionAllotment.IsSuspended,
 					MachineAllocations = productionAllotment.MachineAllocations.Select(ma => new MachineAllocationResponseDto
 					{
 						Id = ma.Id,
@@ -195,6 +197,8 @@ namespace AvyyanBackend.Controllers
 					TotalWeight = pa.TotalWeight,
 					TapeColor = pa.TapeColor,
 					SerialNo = pa.SerialNo,
+					IsOnHold = pa.IsOnHold,
+					IsSuspended = pa.IsSuspended,
 					MachineAllocations = pa.MachineAllocations.Select(ma => new MachineAllocationResponseDto
 					{
 						Id = ma.Id,
@@ -299,6 +303,8 @@ namespace AvyyanBackend.Controllers
 					TotalWeight = pa.TotalWeight,
 					TapeColor = pa.TapeColor,
 					SerialNo = pa.SerialNo,
+					IsOnHold = pa.IsOnHold,
+					IsSuspended = pa.IsSuspended,
 					MachineAllocations = pa.MachineAllocations.Select(ma => new MachineAllocationResponseDto
 					{
 						Id = ma.Id,
@@ -1141,6 +1147,225 @@ namespace AvyyanBackend.Controllers
 			catch (Exception ex)
 			{
 				_logger.LogError(ex, "Error updating machine allocations for production allotment: {AllotmentId}", allotmentId);
+				return StatusCode(500, $"Internal server error: {ex.Message}");
+			}
+		}
+
+		// PUT api/productionallotment/{id}/hold - Toggle hold status
+		[HttpPut("{id}/hold")]
+		public async Task<ActionResult<ProductionAllotmentResponseDto>> ToggleHold(int id)
+		{
+			try
+			{
+				var productionAllotment = await _context.ProductionAllotments.FindAsync(id);
+
+				if (productionAllotment == null)
+				{
+					return NotFound($"Production allotment with ID {id} not found.");
+				}
+
+				// Toggle the hold status
+				productionAllotment.IsOnHold = !productionAllotment.IsOnHold;
+
+				await _context.SaveChangesAsync();
+
+				// Return the updated production allotment
+				var responseDto = new ProductionAllotmentResponseDto
+				{
+					Id = productionAllotment.Id,
+					AllotmentId = productionAllotment.AllotmentId,
+					VoucherNumber = productionAllotment.VoucherNumber,
+					ItemName = productionAllotment.ItemName,
+					SalesOrderId = productionAllotment.SalesOrderId,
+					SalesOrderItemId = productionAllotment.SalesOrderItemId,
+					ActualQuantity = productionAllotment.ActualQuantity,
+					YarnCount = productionAllotment.YarnCount,
+					Diameter = productionAllotment.Diameter,
+					Gauge = productionAllotment.Gauge,
+					FabricType = productionAllotment.FabricType,
+					SlitLine = productionAllotment.SlitLine,
+					StitchLength = productionAllotment.StitchLength,
+					Efficiency = productionAllotment.Efficiency,
+					Composition = productionAllotment.Composition,
+					TotalProductionTime = productionAllotment.MachineAllocations?.Sum(ma => ma.EstimatedProductionTime) ?? 0,
+					CreatedDate = productionAllotment.CreatedDate,
+					YarnLotNo = productionAllotment.YarnLotNo,
+					Counter = productionAllotment.Counter,
+					ColourCode = productionAllotment.ColourCode,
+					ReqGreyGsm = productionAllotment.ReqGreyGsm,
+					ReqGreyWidth = productionAllotment.ReqGreyWidth,
+					ReqFinishGsm = productionAllotment.ReqFinishGsm,
+					ReqFinishWidth = productionAllotment.ReqFinishWidth,
+					YarnPartyName = productionAllotment.YarnPartyName,
+					PolybagColor = productionAllotment.PolybagColor,
+					PartyName = productionAllotment.PartyName,
+					OtherReference = productionAllotment.OtherReference,
+					TubeWeight = productionAllotment.TubeWeight,
+					ShrinkRapWeight = productionAllotment.ShrinkRapWeight,
+					TotalWeight = productionAllotment.TotalWeight,
+					TapeColor = productionAllotment.TapeColor,
+					SerialNo = productionAllotment.SerialNo,
+					IsOnHold = productionAllotment.IsOnHold,
+					IsSuspended = productionAllotment.IsSuspended,
+					MachineAllocations = productionAllotment.MachineAllocations?.Select(ma => new MachineAllocationResponseDto
+					{
+						Id = ma.Id,
+						ProductionAllotmentId = ma.ProductionAllotmentId,
+						MachineName = ma.MachineName,
+						MachineId = ma.MachineId,
+						NumberOfNeedles = ma.NumberOfNeedles,
+						Feeders = ma.Feeders,
+						RPM = ma.RPM,
+						RollPerKg = ma.RollPerKg,
+						TotalLoadWeight = ma.TotalLoadWeight,
+						TotalRolls = ma.TotalRolls,
+						RollBreakdown = !string.IsNullOrEmpty(ma.RollBreakdown)
+							? System.Text.Json.JsonSerializer.Deserialize<DTOs.ProAllotDto.RollBreakdown>(ma.RollBreakdown)
+							: new DTOs.ProAllotDto.RollBreakdown(),
+						EstimatedProductionTime = ma.EstimatedProductionTime
+					}).ToList() ?? new List<MachineAllocationResponseDto>()
+				};
+
+				return Ok(responseDto);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error toggling hold status for production allotment: {Id}", id);
+				return StatusCode(500, $"Internal server error: {ex.Message}");
+			}
+		}
+
+		// PUT api/productionallotment/{id}/suspend - Suspend production planning
+		[HttpPut("{id}/suspend")]
+		public async Task<ActionResult<ProductionAllotmentResponseDto>> SuspendPlanning(int id)
+		{
+			try
+			{
+				var productionAllotment = await _context.ProductionAllotments.FindAsync(id);
+
+				if (productionAllotment == null)
+				{
+					return NotFound($"Production allotment with ID {id} not found.");
+				}
+
+				// Set the suspended status
+				productionAllotment.IsSuspended = true;
+
+				await _context.SaveChangesAsync();
+
+				// Return the updated production allotment
+				var responseDto = new ProductionAllotmentResponseDto
+				{
+					Id = productionAllotment.Id,
+					AllotmentId = productionAllotment.AllotmentId,
+					VoucherNumber = productionAllotment.VoucherNumber,
+					ItemName = productionAllotment.ItemName,
+					SalesOrderId = productionAllotment.SalesOrderId,
+					SalesOrderItemId = productionAllotment.SalesOrderItemId,
+					ActualQuantity = productionAllotment.ActualQuantity,
+					YarnCount = productionAllotment.YarnCount,
+					Diameter = productionAllotment.Diameter,
+					Gauge = productionAllotment.Gauge,
+					FabricType = productionAllotment.FabricType,
+					SlitLine = productionAllotment.SlitLine,
+					StitchLength = productionAllotment.StitchLength,
+					Efficiency = productionAllotment.Efficiency,
+					Composition = productionAllotment.Composition,
+					TotalProductionTime = productionAllotment.MachineAllocations?.Sum(ma => ma.EstimatedProductionTime) ?? 0,
+					CreatedDate = productionAllotment.CreatedDate,
+					YarnLotNo = productionAllotment.YarnLotNo,
+					Counter = productionAllotment.Counter,
+					ColourCode = productionAllotment.ColourCode,
+					ReqGreyGsm = productionAllotment.ReqGreyGsm,
+					ReqGreyWidth = productionAllotment.ReqGreyWidth,
+					ReqFinishGsm = productionAllotment.ReqFinishGsm,
+					ReqFinishWidth = productionAllotment.ReqFinishWidth,
+					YarnPartyName = productionAllotment.YarnPartyName,
+					PolybagColor = productionAllotment.PolybagColor,
+					PartyName = productionAllotment.PartyName,
+					OtherReference = productionAllotment.OtherReference,
+					TubeWeight = productionAllotment.TubeWeight,
+					ShrinkRapWeight = productionAllotment.ShrinkRapWeight,
+					TotalWeight = productionAllotment.TotalWeight,
+					TapeColor = productionAllotment.TapeColor,
+					SerialNo = productionAllotment.SerialNo,
+					IsOnHold = productionAllotment.IsOnHold,
+					IsSuspended = productionAllotment.IsSuspended,
+					MachineAllocations = productionAllotment.MachineAllocations?.Select(ma => new MachineAllocationResponseDto
+					{
+						Id = ma.Id,
+						ProductionAllotmentId = ma.ProductionAllotmentId,
+						MachineName = ma.MachineName,
+						MachineId = ma.MachineId,
+						NumberOfNeedles = ma.NumberOfNeedles,
+						Feeders = ma.Feeders,
+						RPM = ma.RPM,
+						RollPerKg = ma.RollPerKg,
+						TotalLoadWeight = ma.TotalLoadWeight,
+						TotalRolls = ma.TotalRolls,
+						RollBreakdown = !string.IsNullOrEmpty(ma.RollBreakdown)
+							? System.Text.Json.JsonSerializer.Deserialize<DTOs.ProAllotDto.RollBreakdown>(ma.RollBreakdown)
+							: new DTOs.ProAllotDto.RollBreakdown(),
+						EstimatedProductionTime = ma.EstimatedProductionTime
+					}).ToList() ?? new List<MachineAllocationResponseDto>()
+				};
+
+				return Ok(responseDto);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error suspending production planning for production allotment: {Id}", id);
+				return StatusCode(500, $"Internal server error: {ex.Message}");
+			}
+		}
+
+		// GET api/productionallotment/{allotmentId}/status - Check if stickers have been generated or roll confirmations exist
+		[HttpGet("{allotmentId}/status")]
+		public async Task<ActionResult<object>> CheckAllotmentStatus(string allotmentId)
+		{
+			try
+			{
+				// Get ProductionAllotment ID based on the AllotmentId
+				var productionAllotment = await _context.ProductionAllotments
+					.FirstOrDefaultAsync(pa => pa.AllotmentId == allotmentId);
+
+				if (productionAllotment == null)
+				{
+					return NotFound($"Production allotment with ID {allotmentId} not found.");
+				}
+
+				// Get MachineAllocations based on ProductionAllotment ID (FK)
+				var machineAllocations = await _context.MachineAllocations
+					.Where(ma => ma.ProductionAllotmentId == productionAllotment.Id)
+					.Select(ma => ma.Id)
+					.ToListAsync();
+
+				// Check if any RollAssignments exist based on MachineAllocation IDs (FK)
+				bool hasRollAssignment = false;
+				if (machineAllocations.Any())
+				{
+					hasRollAssignment = await _context.RollAssignments
+						.AnyAsync(ra => machineAllocations.Contains(ra.MachineAllocationId));
+				}
+
+				// For sticker generation, we'll consider it generated if roll assignments exist
+				bool hasStickersGenerated = hasRollAssignment;
+
+				// Also check if any roll confirmations exist for this allotment
+				var hasRollConfirmation = await _context.RollConfirmations.AnyAsync(rc => rc.AllotId == allotmentId);
+
+				var statusResponse = new
+				{
+					HasRollConfirmation = hasRollConfirmation,
+					HasStickersGenerated = hasStickersGenerated,
+					HasRollAssignment = hasRollAssignment
+				};
+
+				return Ok(statusResponse);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error checking status for production allotment: {AllotmentId}", allotmentId);
 				return StatusCode(500, $"Internal server error: {ex.Message}");
 			}
 		}

@@ -119,6 +119,8 @@ namespace AvyyanBackend.DTOs.ProAllotDto
 		public string TapeColor { get; set; }
 
 		public string SerialNo { get; set; } // New Serial Number field
+		public bool IsOnHold { get; set; } // Flag to indicate if production is on hold
+		public bool IsSuspended { get; set; } // Flag to indicate if production is suspended
 		public List<MachineAllocationResponseDto> MachineAllocations { get; set; } = new List<MachineAllocationResponseDto>();
 	}
 
