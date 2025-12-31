@@ -185,7 +185,7 @@ namespace AvyyanBackend.Controllers
 				_logger.LogInformation("Fetching next serial number");
 				var serialNumber = await _salesOrderWebService.GetNextSerialNumberAsync();
 				_logger.LogInformation("Next serial number: {SerialNumber}", serialNumber);
-				return Ok(new { serialNumber });
+				return Ok(serialNumber);
 			}
 			catch (Exception ex)
 			{
@@ -267,6 +267,8 @@ namespace AvyyanBackend.Controllers
 
 				_logger.LogInformation("Creating new sales order web with voucher number: {VoucherNumber}",
 					createSalesOrderWebDto.VoucherNumber);
+
+
 
 				var salesOrderWeb = await _salesOrderWebService.CreateAsync(createSalesOrderWebDto);
 

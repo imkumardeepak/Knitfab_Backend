@@ -102,8 +102,7 @@ namespace AvyyanBackend.Models.ProAllot
 		public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
 		// Production status flags
-		public bool IsOnHold { get; set; } = false; // Flag to indicate if production is on hold
-		public bool IsSuspended { get; set; } = false; // Flag to indicate if production is suspended
+		public int ProductionStatus { get; set; } = 0; // 0 = normal, 1 = on hold, 2 = suspended
 
 		// Navigation property
 		public virtual ICollection<MachineAllocation> MachineAllocations { get; set; }

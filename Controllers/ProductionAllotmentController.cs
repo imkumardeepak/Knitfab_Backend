@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AutoMapper;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AutoMapper;
 using AvyyanBackend.Data;
 using AvyyanBackend.DTOs.ProAllotDto;
 using AvyyanBackend.Models.ProAllot;
@@ -17,6 +17,12 @@ using System.Text.RegularExpressions;
 
 namespace AvyyanBackend.Controllers
 {
+	// Add the DTO class for updating status
+	public class UpdateStatusRequest
+	{
+		public int Status { get; set; }
+	}
+
 	[ApiController]
 	[Route("api/[controller]")]
 	public class ProductionAllotmentController : ControllerBase
@@ -122,8 +128,9 @@ namespace AvyyanBackend.Controllers
 					TotalWeight = productionAllotment.TotalWeight,
 					TapeColor = productionAllotment.TapeColor,
 					SerialNo = productionAllotment.SerialNo,
-					IsOnHold = productionAllotment.IsOnHold,
-					IsSuspended = productionAllotment.IsSuspended,
+					ProductionStatus = productionAllotment.ProductionStatus,
+					IsOnHold = productionAllotment.ProductionStatus == 1,
+					IsSuspended = productionAllotment.ProductionStatus == 2,
 					MachineAllocations = productionAllotment.MachineAllocations.Select(ma => new MachineAllocationResponseDto
 					{
 						Id = ma.Id,
@@ -197,8 +204,9 @@ namespace AvyyanBackend.Controllers
 					TotalWeight = pa.TotalWeight,
 					TapeColor = pa.TapeColor,
 					SerialNo = pa.SerialNo,
-					IsOnHold = pa.IsOnHold,
-					IsSuspended = pa.IsSuspended,
+					ProductionStatus = pa.ProductionStatus,
+					IsOnHold = pa.ProductionStatus == 1,
+					IsSuspended = pa.ProductionStatus == 2,
 					MachineAllocations = pa.MachineAllocations.Select(ma => new MachineAllocationResponseDto
 					{
 						Id = ma.Id,
@@ -303,8 +311,9 @@ namespace AvyyanBackend.Controllers
 					TotalWeight = pa.TotalWeight,
 					TapeColor = pa.TapeColor,
 					SerialNo = pa.SerialNo,
-					IsOnHold = pa.IsOnHold,
-					IsSuspended = pa.IsSuspended,
+					ProductionStatus = pa.ProductionStatus,
+					IsOnHold = pa.ProductionStatus == 1,
+					IsSuspended = pa.ProductionStatus == 2,
 					MachineAllocations = pa.MachineAllocations.Select(ma => new MachineAllocationResponseDto
 					{
 						Id = ma.Id,
@@ -1123,6 +1132,9 @@ namespace AvyyanBackend.Controllers
 					TotalWeight = productionAllotment.TotalWeight,
 					TapeColor = productionAllotment.TapeColor,
 					SerialNo = productionAllotment.SerialNo,
+					ProductionStatus = productionAllotment.ProductionStatus,
+					IsOnHold = productionAllotment.ProductionStatus == 1,
+					IsSuspended = productionAllotment.ProductionStatus == 2,
 					MachineAllocations = productionAllotment.MachineAllocations.Select(ma => new MachineAllocationResponseDto
 					{
 						Id = ma.Id,
@@ -1164,8 +1176,8 @@ namespace AvyyanBackend.Controllers
 					return NotFound($"Production allotment with ID {id} not found.");
 				}
 
-				// Toggle the hold status
-				productionAllotment.IsOnHold = !productionAllotment.IsOnHold;
+				// Toggle the hold status - if currently on hold (1), set to normal (0); if normal (0) or suspended (2), set to on hold (1)
+				productionAllotment.ProductionStatus = productionAllotment.ProductionStatus == 1 ? 0 : 1;
 
 				await _context.SaveChangesAsync();
 
@@ -1205,8 +1217,9 @@ namespace AvyyanBackend.Controllers
 					TotalWeight = productionAllotment.TotalWeight,
 					TapeColor = productionAllotment.TapeColor,
 					SerialNo = productionAllotment.SerialNo,
-					IsOnHold = productionAllotment.IsOnHold,
-					IsSuspended = productionAllotment.IsSuspended,
+					ProductionStatus = productionAllotment.ProductionStatus,
+					IsOnHold = productionAllotment.ProductionStatus == 1,
+					IsSuspended = productionAllotment.ProductionStatus == 2,
 					MachineAllocations = productionAllotment.MachineAllocations?.Select(ma => new MachineAllocationResponseDto
 					{
 						Id = ma.Id,
@@ -1248,8 +1261,8 @@ namespace AvyyanBackend.Controllers
 					return NotFound($"Production allotment with ID {id} not found.");
 				}
 
-				// Set the suspended status
-				productionAllotment.IsSuspended = true;
+				// Set the suspended status to 2
+				productionAllotment.ProductionStatus = 2;
 
 				await _context.SaveChangesAsync();
 
@@ -1289,8 +1302,9 @@ namespace AvyyanBackend.Controllers
 					TotalWeight = productionAllotment.TotalWeight,
 					TapeColor = productionAllotment.TapeColor,
 					SerialNo = productionAllotment.SerialNo,
-					IsOnHold = productionAllotment.IsOnHold,
-					IsSuspended = productionAllotment.IsSuspended,
+					ProductionStatus = productionAllotment.ProductionStatus,
+					IsOnHold = productionAllotment.ProductionStatus == 1,
+					IsSuspended = productionAllotment.ProductionStatus == 2,
 					MachineAllocations = productionAllotment.MachineAllocations?.Select(ma => new MachineAllocationResponseDto
 					{
 						Id = ma.Id,
@@ -1315,6 +1329,188 @@ namespace AvyyanBackend.Controllers
 			catch (Exception ex)
 			{
 				_logger.LogError(ex, "Error suspending production planning for production allotment: {Id}", id);
+				return StatusCode(500, $"Internal server error: {ex.Message}");
+			}
+		}
+
+		// PUT api/productionallotment/{id}/status - Update production status
+		[HttpPut("{id}/status")]
+		public async Task<ActionResult<ProductionAllotmentResponseDto>> UpdateProductionStatus(int id, [FromBody] UpdateStatusRequest request)
+		{
+			try
+			{
+				var productionAllotment = await _context.ProductionAllotments.FindAsync(id);
+
+				if (productionAllotment == null)
+				{
+					return NotFound($"Production allotment with ID {id} not found.");
+				}
+
+				// Validate the status value (0 = normal, 1 = on hold, 2 = suspended, 3 = partially completed)
+				if (request.Status < 0 || request.Status > 3)
+				{
+					return BadRequest("Invalid production status value.");
+				}
+
+				// Update the production status
+				productionAllotment.ProductionStatus = request.Status;
+
+				await _context.SaveChangesAsync();
+
+				// Return the updated production allotment
+				var responseDto = new ProductionAllotmentResponseDto
+				{
+					Id = productionAllotment.Id,
+					AllotmentId = productionAllotment.AllotmentId,
+					VoucherNumber = productionAllotment.VoucherNumber,
+					ItemName = productionAllotment.ItemName,
+					SalesOrderId = productionAllotment.SalesOrderId,
+					SalesOrderItemId = productionAllotment.SalesOrderItemId,
+					ActualQuantity = productionAllotment.ActualQuantity,
+					YarnCount = productionAllotment.YarnCount,
+					Diameter = productionAllotment.Diameter,
+					Gauge = productionAllotment.Gauge,
+					FabricType = productionAllotment.FabricType,
+					SlitLine = productionAllotment.SlitLine,
+					StitchLength = productionAllotment.StitchLength,
+					Efficiency = productionAllotment.Efficiency,
+					Composition = productionAllotment.Composition,
+					TotalProductionTime = productionAllotment.MachineAllocations?.Sum(ma => ma.EstimatedProductionTime) ?? 0,
+					CreatedDate = productionAllotment.CreatedDate,
+					YarnLotNo = productionAllotment.YarnLotNo,
+					Counter = productionAllotment.Counter,
+					ColourCode = productionAllotment.ColourCode,
+					ReqGreyGsm = productionAllotment.ReqGreyGsm,
+					ReqGreyWidth = productionAllotment.ReqGreyWidth,
+					ReqFinishGsm = productionAllotment.ReqFinishGsm,
+					ReqFinishWidth = productionAllotment.ReqFinishWidth,
+					YarnPartyName = productionAllotment.YarnPartyName,
+					PolybagColor = productionAllotment.PolybagColor,
+					PartyName = productionAllotment.PartyName,
+					OtherReference = productionAllotment.OtherReference,
+					TubeWeight = productionAllotment.TubeWeight,
+					ShrinkRapWeight = productionAllotment.ShrinkRapWeight,
+					TotalWeight = productionAllotment.TotalWeight,
+					TapeColor = productionAllotment.TapeColor,
+					SerialNo = productionAllotment.SerialNo,
+					ProductionStatus = productionAllotment.ProductionStatus,
+					IsOnHold = productionAllotment.ProductionStatus == 1,
+					IsSuspended = productionAllotment.ProductionStatus == 2,
+					MachineAllocations = productionAllotment.MachineAllocations?.Select(ma => new MachineAllocationResponseDto
+					{
+						Id = ma.Id,
+						ProductionAllotmentId = ma.ProductionAllotmentId,
+						MachineName = ma.MachineName,
+						MachineId = ma.MachineId,
+						NumberOfNeedles = ma.NumberOfNeedles,
+						Feeders = ma.Feeders,
+						RPM = ma.RPM,
+						RollPerKg = ma.RollPerKg,
+						TotalLoadWeight = ma.TotalLoadWeight,
+						TotalRolls = ma.TotalRolls,
+						RollBreakdown = !string.IsNullOrEmpty(ma.RollBreakdown)
+							? System.Text.Json.JsonSerializer.Deserialize<DTOs.ProAllotDto.RollBreakdown>(ma.RollBreakdown)
+							: new DTOs.ProAllotDto.RollBreakdown(),
+						EstimatedProductionTime = ma.EstimatedProductionTime
+					}).ToList() ?? new List<MachineAllocationResponseDto>()
+				};
+
+				return Ok(responseDto);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error updating production status for production allotment: {Id}", id);
+				return StatusCode(500, $"Internal server error: {ex.Message}");
+			}
+		}
+
+		// PUT api/productionallotment/{id}/restart - Restart production from suspended status
+		[HttpPut("{id}/restart")]
+		public async Task<ActionResult<ProductionAllotmentResponseDto>> RestartProduction(int id)
+		{
+			try
+			{
+				var productionAllotment = await _context.ProductionAllotments.FindAsync(id);
+
+				if (productionAllotment == null)
+				{
+					return NotFound($"Production allotment with ID {id} not found.");
+				}
+
+				// Only allow restart if currently suspended (status 2)
+				if (productionAllotment.ProductionStatus != 2)
+				{
+					return BadRequest("Production can only be restarted from suspended status.");
+				}
+
+				// Set the status back to normal (0) to restart production
+				productionAllotment.ProductionStatus = 0;
+
+				await _context.SaveChangesAsync();
+
+				// Return the updated production allotment
+				var responseDto = new ProductionAllotmentResponseDto
+				{
+					Id = productionAllotment.Id,
+					AllotmentId = productionAllotment.AllotmentId,
+					VoucherNumber = productionAllotment.VoucherNumber,
+					ItemName = productionAllotment.ItemName,
+					SalesOrderId = productionAllotment.SalesOrderId,
+					SalesOrderItemId = productionAllotment.SalesOrderItemId,
+					ActualQuantity = productionAllotment.ActualQuantity,
+					YarnCount = productionAllotment.YarnCount,
+					Diameter = productionAllotment.Diameter,
+					Gauge = productionAllotment.Gauge,
+					FabricType = productionAllotment.FabricType,
+					SlitLine = productionAllotment.SlitLine,
+					StitchLength = productionAllotment.StitchLength,
+					Efficiency = productionAllotment.Efficiency,
+					Composition = productionAllotment.Composition,
+					TotalProductionTime = productionAllotment.MachineAllocations?.Sum(ma => ma.EstimatedProductionTime) ?? 0,
+					CreatedDate = productionAllotment.CreatedDate,
+					YarnLotNo = productionAllotment.YarnLotNo,
+					Counter = productionAllotment.Counter,
+					ColourCode = productionAllotment.ColourCode,
+					ReqGreyGsm = productionAllotment.ReqGreyGsm,
+					ReqGreyWidth = productionAllotment.ReqGreyWidth,
+					ReqFinishGsm = productionAllotment.ReqFinishGsm,
+					ReqFinishWidth = productionAllotment.ReqFinishWidth,
+					YarnPartyName = productionAllotment.YarnPartyName,
+					PolybagColor = productionAllotment.PolybagColor,
+					PartyName = productionAllotment.PartyName,
+					OtherReference = productionAllotment.OtherReference,
+					TubeWeight = productionAllotment.TubeWeight,
+					ShrinkRapWeight = productionAllotment.ShrinkRapWeight,
+					TotalWeight = productionAllotment.TotalWeight,
+					TapeColor = productionAllotment.TapeColor,
+					SerialNo = productionAllotment.SerialNo,
+					ProductionStatus = productionAllotment.ProductionStatus,
+					IsOnHold = productionAllotment.ProductionStatus == 1,
+					IsSuspended = productionAllotment.ProductionStatus == 2,
+					MachineAllocations = productionAllotment.MachineAllocations?.Select(ma => new MachineAllocationResponseDto
+					{
+						Id = ma.Id,
+						ProductionAllotmentId = ma.ProductionAllotmentId,
+						MachineName = ma.MachineName,
+						MachineId = ma.MachineId,
+						NumberOfNeedles = ma.NumberOfNeedles,
+						Feeders = ma.Feeders,
+						RPM = ma.RPM,
+						RollPerKg = ma.RollPerKg,
+						TotalLoadWeight = ma.TotalLoadWeight,
+						TotalRolls = ma.TotalRolls,
+						RollBreakdown = !string.IsNullOrEmpty(ma.RollBreakdown)
+							? System.Text.Json.JsonSerializer.Deserialize<DTOs.ProAllotDto.RollBreakdown>(ma.RollBreakdown)
+							: new DTOs.ProAllotDto.RollBreakdown(),
+						EstimatedProductionTime = ma.EstimatedProductionTime
+					}).ToList() ?? new List<MachineAllocationResponseDto>()
+				};
+
+				return Ok(responseDto);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error restarting production for production allotment: {Id}", id);
 				return StatusCode(500, $"Internal server error: {ex.Message}");
 			}
 		}
@@ -1354,7 +1550,12 @@ namespace AvyyanBackend.Controllers
 				// Also check if any roll confirmations exist for this allotment
 				var hasRollConfirmation = await _context.RollConfirmations.AnyAsync(rc => rc.AllotId == allotmentId);
 
-				var statusResponse = new
+				if (hasRollConfirmation)
+				{
+					hasStickersGenerated = false;
+					hasRollAssignment = false;
+                }
+                var statusResponse = new
 				{
 					HasRollConfirmation = hasRollConfirmation,
 					HasStickersGenerated = hasStickersGenerated,
@@ -1369,5 +1570,123 @@ namespace AvyyanBackend.Controllers
 				return StatusCode(500, $"Internal server error: {ex.Message}");
 			}
 		}
+
+		// GET api/productionallotment/sales-order/{salesOrderId}/items/{salesOrderItemId}/roll-confirmation-summary - Get roll confirmation summary for a sales order item
+		[HttpGet("sales-order/{salesOrderId}/items/{salesOrderItemId}/roll-confirmation-summary")]
+		public async Task<ActionResult<object>> GetRollConfirmationSummaryForSalesOrderItem(int salesOrderId, int salesOrderItemId)
+		{
+			try
+			{
+				// Get all production allotments for the sales order item
+				var productionAllotments = await _context.ProductionAllotments
+					.Where(pa => pa.SalesOrderId == salesOrderId && pa.SalesOrderItemId == salesOrderItemId)
+					.Select(pa => pa.AllotmentId)
+					.ToListAsync();
+
+				if (!productionAllotments.Any())
+				{
+					return Ok(new { TotalLots = 0, TotalRollConfirmations = 0, TotalNetWeight = 0.0m });
+				}
+
+				// Get all roll confirmations for these lots
+				var rollConfirmations = await _context.RollConfirmations
+					.Where(rc => productionAllotments.Contains(rc.AllotId))
+					.ToListAsync();
+
+				var totalNetWeight = rollConfirmations.Sum(rc => rc.NetWeight) ?? 0.0m;
+
+				var summary = new
+				{
+					TotalLots = productionAllotments.Count,
+					TotalRollConfirmations = rollConfirmations.Count,
+					TotalNetWeight = totalNetWeight
+				};
+
+				return Ok(summary);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error fetching roll confirmation summary for sales order item: {SalesOrderId}, {SalesOrderItemId}", salesOrderId, salesOrderItemId);
+				return StatusCode(500, $"Internal server error: {ex.Message}");
+			}
+		}
+
+		// GET api/productionallotment/sales-order/{salesOrderId}/items/{salesOrderItemId}/lots - Get lots for a sales order item
+		[HttpGet("sales-order/{salesOrderId}/items/{salesOrderItemId}/lots")]
+		public async Task<ActionResult<IEnumerable<ProductionAllotmentResponseDto>>> GetLotsForSalesOrderItem(int salesOrderId, int salesOrderItemId)
+		{
+			try
+			{
+				var productionAllotments = await _context.ProductionAllotments
+					.Include(pa => pa.MachineAllocations)
+					.Where(pa => pa.SalesOrderId == salesOrderId && pa.SalesOrderItemId == salesOrderItemId)
+					.ToListAsync();
+
+				var responseDtos = productionAllotments.Select(pa => new ProductionAllotmentResponseDto
+				{
+					Id = pa.Id,
+					AllotmentId = pa.AllotmentId,
+					VoucherNumber = pa.VoucherNumber,
+					ItemName = pa.ItemName,
+					SalesOrderId = pa.SalesOrderId,
+					SalesOrderItemId = pa.SalesOrderItemId,
+					ActualQuantity = pa.ActualQuantity,
+					YarnCount = pa.YarnCount,
+					Diameter = pa.Diameter,
+					Gauge = pa.Gauge,
+					FabricType = pa.FabricType,
+					SlitLine = pa.SlitLine,
+					StitchLength = pa.StitchLength,
+					Efficiency = pa.Efficiency,
+					Composition = pa.Composition,
+					TotalProductionTime = pa.TotalProductionTime,
+					CreatedDate = pa.CreatedDate,
+					YarnLotNo = pa.YarnLotNo,
+					Counter = pa.Counter,
+					ColourCode = pa.ColourCode,
+					ReqGreyGsm = pa.ReqGreyGsm,
+					ReqGreyWidth = pa.ReqGreyWidth,
+					ReqFinishGsm = pa.ReqFinishGsm,
+					ReqFinishWidth = pa.ReqFinishWidth,
+					YarnPartyName = pa.YarnPartyName,
+					PolybagColor = pa.PolybagColor,
+					PartyName = pa.PartyName,
+					OtherReference = pa.OtherReference,
+					TubeWeight = pa.TubeWeight,
+					ShrinkRapWeight = pa.ShrinkRapWeight,
+					TotalWeight = pa.TotalWeight,
+					TapeColor = pa.TapeColor,
+					SerialNo = pa.SerialNo,
+					ProductionStatus = pa.ProductionStatus,
+					IsOnHold = pa.ProductionStatus == 1,
+					IsSuspended = pa.ProductionStatus == 2,
+					MachineAllocations = pa.MachineAllocations.Select(ma => new MachineAllocationResponseDto
+					{
+						Id = ma.Id,
+						ProductionAllotmentId = ma.ProductionAllotmentId,
+						MachineName = ma.MachineName,
+						MachineId = ma.MachineId,
+						NumberOfNeedles = ma.NumberOfNeedles,
+						Feeders = ma.Feeders,
+						RPM = ma.RPM,
+						RollPerKg = ma.RollPerKg,
+						TotalLoadWeight = ma.TotalLoadWeight,
+						TotalRolls = ma.TotalRolls,
+						RollBreakdown = !string.IsNullOrEmpty(ma.RollBreakdown)
+							? System.Text.Json.JsonSerializer.Deserialize<DTOs.ProAllotDto.RollBreakdown>(ma.RollBreakdown)
+							: new DTOs.ProAllotDto.RollBreakdown(),
+						EstimatedProductionTime = ma.EstimatedProductionTime
+					}).ToList()
+				}).ToList();
+
+				return Ok(responseDtos);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error fetching lots for sales order item: {SalesOrderId}, {SalesOrderItemId}", salesOrderId, salesOrderItemId);
+				return StatusCode(500, $"Internal server error: {ex.Message}");
+			}
+		}
+
 	}
 }

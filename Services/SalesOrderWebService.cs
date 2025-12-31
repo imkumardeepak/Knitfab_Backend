@@ -62,6 +62,8 @@ namespace AvyyanBackend.Services
                 .FirstOrDefaultAsync(sow => sow.VoucherNumber == createSalesOrderWebDto.VoucherNumber);
             if (existingSalesOrderWeb != null)
             {
+                //return StatusCode(StatusCodes.Status500InternalServerError,
+                    //new { message = $"Sales order web with voucher number '{createSalesOrderWebDto.VoucherNumber}' already exists" });
                 throw new InvalidOperationException($"Sales order web with voucher number '{createSalesOrderWebDto.VoucherNumber}' already exists");
             }
 
