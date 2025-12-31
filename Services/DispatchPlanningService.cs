@@ -255,5 +255,11 @@ namespace AvyyanBackend.Services
             
             return _mapper.Map<IEnumerable<DispatchedRollDto>>(orderedRolls);
         }
+        
+        // New method to delete a dispatched roll
+        public async Task<bool> DeleteDispatchedRollAsync(int id)
+        {
+            return await _repository.DeleteDispatchedRollAsync(id);
+        }
     }
 }

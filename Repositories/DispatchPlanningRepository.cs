@@ -197,5 +197,16 @@ namespace AvyyanBackend.Repositories
             return $"{newPrefix}001"; // Start with 001
         }
 
+        public async Task<bool> DeleteDispatchedRollAsync(int id)
+        {
+            var dispatchedRoll = await _context.DispatchedRolls.FindAsync(id);
+            if (dispatchedRoll == null)
+                return false;
+
+            _context.DispatchedRolls.Remove(dispatchedRoll);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
     }
 }

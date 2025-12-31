@@ -150,5 +150,16 @@ namespace AvyyanBackend.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+        
+        // New endpoint to delete a specific dispatched roll
+        [HttpDelete("dispatched-rolls/{id}")]
+        public async Task<IActionResult> DeleteDispatchedRoll(int id)
+        {
+            var result = await _service.DeleteDispatchedRollAsync(id);
+            if (!result)
+                return NotFound();
+
+            return NoContent();
+        }
     }
 }
