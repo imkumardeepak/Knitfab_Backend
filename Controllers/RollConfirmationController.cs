@@ -208,6 +208,7 @@ namespace AvyyanBackend.Controllers
 					string weightData = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 					var parsedData = ParseWeightData(weightData);
 
+
 					return Ok(parsedData);
 				}
 				else
