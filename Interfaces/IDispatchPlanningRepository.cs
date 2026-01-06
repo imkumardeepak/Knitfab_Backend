@@ -12,6 +12,7 @@ namespace AvyyanBackend.Interfaces
         Task<DispatchPlanning> UpdateAsync(int id, DispatchPlanning dispatchPlanning);
         Task<bool> DeleteAsync(int id);
         Task<IEnumerable<DispatchedRoll>> GetDispatchedRollsByPlanningIdAsync(int planningId);
+        Task<int> GetMaxDispatchedRollIdAsync();
         Task<DispatchedRoll> CreateDispatchedRollAsync(DispatchedRoll dispatchedRoll);
         Task<IEnumerable<DispatchedRoll>> CreateDispatchedRollsBulkAsync(IEnumerable<DispatchedRoll> dispatchedRolls);
         Task<string> GenerateLoadingNoAsync();

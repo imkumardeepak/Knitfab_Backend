@@ -101,6 +101,13 @@ namespace AvyyanBackend.Repositories
             return existing;
         }
         
+        public async Task<int> GetMaxDispatchedRollIdAsync()
+        {
+            var maxId = await _context.DispatchedRolls
+                .MaxAsync(dr => (int?)dr.Id) ?? 0;
+            return maxId;
+        }
+        
         public async Task<DispatchedRoll> CreateDispatchedRollAsync(DispatchedRoll dispatchedRoll)
         {
             _context.DispatchedRolls.Add(dispatchedRoll);

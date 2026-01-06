@@ -1,6 +1,7 @@
 using AvyyanBackend.DTOs.DispatchPlanning;
 using AvyyanBackend.Services;
 using Microsoft.AspNetCore.Mvc;
+using Npgsql;
 
 namespace AvyyanBackend.Controllers
 {
@@ -85,9 +86,23 @@ namespace AvyyanBackend.Controllers
                 var dispatchedRoll = await _service.CreateDispatchedRollAsync(dto);
                 return CreatedAtAction(nameof(GetDispatchedRolls), new { id = dispatchedRoll.Id }, dispatchedRoll);
             }
-            catch (Exception ex)
+            catch (ArgumentException ex)
             {
                 return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("already exists"))
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                // Log the general exception for debugging purposes
+                Console.WriteLine($"Error creating dispatched roll: {ex.Message}");
+                return StatusCode(500, new { message = "An error occurred while creating the dispatched roll." });
             }
         }
         
@@ -98,6 +113,10 @@ namespace AvyyanBackend.Controllers
             {
                 var dispatchedRolls = await _service.CreateDispatchedRollsBulkAsync(dtos);
                 return Ok(dispatchedRolls);
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("already exists"))
+            {
+                return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {
