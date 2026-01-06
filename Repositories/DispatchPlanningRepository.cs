@@ -56,6 +56,33 @@ namespace AvyyanBackend.Repositories
                 .FirstOrDefaultAsync(dp => dp.LotNo == lotNo);
         }
 
+        public async Task<IEnumerable<DispatchPlanning>> GetByDispatchOrderIdAsync(string dispatchOrderId)
+        {
+            return await _context.DispatchPlannings
+                .Include(dp => dp.Transport)
+                .Include(dp => dp.Courier)
+                .Where(dp => dp.DispatchOrderId == dispatchOrderId && dp.IsActive)
+                .OrderBy(dp => dp.LoadingNo)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<object>> GetFullyDispatchedOrdersAsync()
+        {
+            // Get distinct dispatch order IDs for fully dispatched orders
+            // Returns: { id, loadingNo, customerName }
+            return await _context.DispatchPlannings
+                .Where(dp => dp.IsFullyDispatched && dp.IsActive)
+                .GroupBy(dp => dp.DispatchOrderId)
+                .Select(g => new
+                {
+                    id = g.Key,
+                    loadingNo = g.First().LoadingNo ?? "N/A",
+                    customerName = g.First().CustomerName ?? "N/A"
+                })
+                .OrderByDescending(o => o.id)
+                .ToListAsync();
+        }
+
         public async Task<DispatchPlanning> UpdateAsync(int id, DispatchPlanning dispatchPlanning)
         {
             var existing = await _context.DispatchPlannings.FindAsync(id);
@@ -99,6 +126,13 @@ namespace AvyyanBackend.Repositories
     
             await _context.SaveChangesAsync();
             return existing;
+        }
+        
+        public async Task<int> GetMaxDispatchedRollIdAsync()
+        {
+            var maxId = await _context.DispatchedRolls
+                .MaxAsync(dr => (int?)dr.Id) ?? 0;
+            return maxId;
         }
         
         public async Task<DispatchedRoll> CreateDispatchedRollAsync(DispatchedRoll dispatchedRoll)
@@ -195,6 +229,17 @@ namespace AvyyanBackend.Repositories
             var currentMonth = now.ToString("MM");
             var newPrefix = $"DO{currentYear}{currentMonth}";
             return $"{newPrefix}001"; // Start with 001
+        }
+
+        public async Task<bool> DeleteDispatchedRollAsync(int id)
+        {
+            var dispatchedRoll = await _context.DispatchedRolls.FindAsync(id);
+            if (dispatchedRoll == null)
+                return false;
+
+            _context.DispatchedRolls.Remove(dispatchedRoll);
+            await _context.SaveChangesAsync();
+            return true;
         }
 
     }

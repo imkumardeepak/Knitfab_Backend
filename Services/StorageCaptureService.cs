@@ -111,5 +111,27 @@ namespace AvyyanBackend.Services
 
 			return _mapper.Map<IEnumerable<StorageCaptureResponseDto>>(orderedStorageCaptures);
 		}
+
+		public async Task<IEnumerable<StorageCaptureResponseDto>> GetStorageCapturesByLotNumbersAsync(List<string> lotNumbers)
+		{
+			_logger.LogDebug("Getting storage captures for {Count} lot numbers", lotNumbers.Count);
+
+			if (lotNumbers == null || !lotNumbers.Any())
+			{
+				_logger.LogWarning("No lot numbers provided for search");
+				return Enumerable.Empty<StorageCaptureResponseDto>();
+			}
+
+			// Find all storage captures where LotNo is in the provided list
+			var storageCaptures = await _storageCaptureRepository.FindAsync(m => lotNumbers.Contains(m.LotNo));
+
+			// Order by LotNo and FGRollNo
+			var orderedStorageCaptures = storageCaptures.OrderBy(m => m.LotNo).ThenBy(m => m.FGRollNo).ToList();
+
+			_logger.LogInformation("Retrieved {Count} storage captures for {LotCount} lot numbers",
+				orderedStorageCaptures.Count, lotNumbers.Count);
+
+			return _mapper.Map<IEnumerable<StorageCaptureResponseDto>>(orderedStorageCaptures);
+		}
 	}
 }

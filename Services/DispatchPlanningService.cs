@@ -2,6 +2,7 @@ using AvyyanBackend.DTOs.DispatchPlanning;
 using AvyyanBackend.Interfaces;
 using AvyyanBackend.Models;
 using AutoMapper;
+using Npgsql;
 
 namespace AvyyanBackend.Services
 {
@@ -28,6 +29,17 @@ namespace AvyyanBackend.Services
             return dispatchPlanning == null ? null : _mapper.Map<DispatchPlanningDto>(dispatchPlanning);
         }
 
+        public async Task<IEnumerable<DispatchPlanningDto>> GetByDispatchOrderIdAsync(string dispatchOrderId)
+        {
+            var dispatchPlannings = await _repository.GetByDispatchOrderIdAsync(dispatchOrderId);
+            return _mapper.Map<IEnumerable<DispatchPlanningDto>>(dispatchPlannings);
+        }
+
+        public async Task<IEnumerable<object>> GetFullyDispatchedOrdersAsync()
+        {
+            return await _repository.GetFullyDispatchedOrdersAsync();
+        }
+
         public async Task<DispatchPlanningDto> CreateAsync(CreateDispatchPlanningDto createDto)
         {
             // Generate LoadingNo
@@ -52,7 +64,7 @@ namespace AvyyanBackend.Services
             var updated = await _repository.UpdateAsync(id, dispatchPlanning);
             
             // Check if required rolls match dispatched rolls to determine status
-            updated.IsFullyDispatched = updated.TotalRequiredRolls <= updated.TotalDispatchedRolls;
+            //updated.IsFullyDispatched = updated.TotalRequiredRolls <= updated.TotalDispatchedRolls;
             
             return _mapper.Map<DispatchPlanningDto>(updated);
         }
@@ -70,19 +82,44 @@ namespace AvyyanBackend.Services
 
         public async Task<DispatchedRollDto> CreateDispatchedRollAsync(DispatchedRollDto dto)
         {
-            var dispatchedRoll = _mapper.Map<DispatchedRoll>(dto);
-            dispatchedRoll.CreatedAt = DateTime.UtcNow;
-            dispatchedRoll.IsActive = true;
-            
-            var created = await _repository.CreateDispatchedRollAsync(dispatchedRoll);
-            return _mapper.Map<DispatchedRollDto>(created);
+            try
+            {
+                var dispatchedRoll = _mapper.Map<DispatchedRoll>(dto);
+                // Get the next available ID by finding the max ID and incrementing it
+                var maxId = await _repository.GetMaxDispatchedRollIdAsync();
+                dispatchedRoll.Id = maxId + 1;
+                dispatchedRoll.CreatedAt = DateTime.UtcNow;
+                dispatchedRoll.IsActive = true;
+                
+                var created = await _repository.CreateDispatchedRollAsync(dispatchedRoll);
+                return _mapper.Map<DispatchedRollDto>(created);
+            }
+            catch (PostgresException ex) when (ex.SqlState == "23505") // Unique violation
+            {
+                throw new InvalidOperationException("A dispatched roll with the same key already exists.", ex);
+            }
+            catch (ArgumentNullException ex)
+            {
+                throw new ArgumentException($"Required data is missing: {ex.ParamName}", ex);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception if a logging service is available
+                throw new InvalidOperationException($"Failed to create dispatched roll: {ex.Message}", ex);
+            }
         }
         
         public async Task<IEnumerable<DispatchedRollDto>> CreateDispatchedRollsBulkAsync(IEnumerable<DispatchedRollDto> dtos)
         {
             var dispatchedRolls = _mapper.Map<IEnumerable<DispatchedRoll>>(dtos);
+            
+            // Get the current max ID to start assigning new IDs
+            var maxId = await _repository.GetMaxDispatchedRollIdAsync();
+            
+            int idCounter = maxId + 1;
             foreach (var roll in dispatchedRolls)
             {
+                roll.Id = idCounter++;
                 roll.CreatedAt = DateTime.UtcNow;
                 roll.IsActive = true;
             }
@@ -254,6 +291,12 @@ namespace AvyyanBackend.Services
                 .ToList();
             
             return _mapper.Map<IEnumerable<DispatchedRollDto>>(orderedRolls);
+        }
+        
+        // New method to delete a dispatched roll
+        public async Task<bool> DeleteDispatchedRollAsync(int id)
+        {
+            return await _repository.DeleteDispatchedRollAsync(id);
         }
     }
 }

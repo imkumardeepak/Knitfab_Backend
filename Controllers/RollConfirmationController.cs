@@ -208,6 +208,7 @@ namespace AvyyanBackend.Controllers
 					string weightData = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 					var parsedData = ParseWeightData(weightData);
 
+
 					return Ok(parsedData);
 				}
 				else
@@ -387,6 +388,69 @@ namespace AvyyanBackend.Controllers
 			catch (Exception ex)
 			{
 				_logger.LogError(ex, "Error fetching all roll confirmations");
+				return StatusCode(500, $"Internal server error: {ex.Message}");
+			}
+		}
+
+		// GET api/rollconfirmation/by-allot-ids - Get roll confirmations for multiple allot IDs
+		[HttpGet("by-allot-ids")]
+		public async Task<ActionResult<Dictionary<string, List<RollConfirmationResponseDto>>>> GetRollConfirmationsByAllotIds([FromQuery] string allotIds)
+		{
+			try
+			{
+				if (string.IsNullOrWhiteSpace(allotIds))
+					return BadRequest("Allot IDs parameter is required");
+
+				var allotIdsList = allotIds.Split(',', StringSplitOptions.RemoveEmptyEntries)
+					.Select(id => id.Trim())
+					.Where(id => !string.IsNullOrWhiteSpace(id))
+					.ToList();
+
+				if (!allotIdsList.Any())
+					return BadRequest("No valid allot IDs provided");
+
+				_logger.LogInformation("Fetching roll confirmations for {Count} allot IDs", allotIdsList.Count);
+
+				// Fetch all roll confirmations for the given allot IDs in a single query
+				var rollConfirmations = await _context.RollConfirmations
+					.Where(r => allotIdsList.Contains(r.AllotId))
+					.OrderBy(r => r.AllotId)
+					.ThenBy(r => r.FgRollNo)
+					.ToListAsync();
+
+				// Group by AllotId and convert to DTOs
+				var groupedResults = rollConfirmations
+					.GroupBy(r => r.AllotId)
+					.ToDictionary(
+						g => g.Key,
+						g => g.Select(roll => new RollConfirmationResponseDto
+						{
+							Id = roll.Id,
+							AllotId = roll.AllotId,
+							MachineName = roll.MachineName,
+							RollPerKg = roll.RollPerKg,
+							GreyGsm = roll.GreyGsm,
+							GreyWidth = roll.GreyWidth,
+							BlendPercent = roll.BlendPercent,
+							Cotton = roll.Cotton,
+							Polyester = roll.Polyester,
+							Spandex = roll.Spandex,
+							RollNo = roll.RollNo,
+							GrossWeight = roll.GrossWeight,
+							TareWeight = roll.TareWeight,
+							NetWeight = roll.NetWeight,
+							FgRollNo = roll.FgRollNo,
+							IsFGStickerGenerated = roll.IsFGStickerGenerated,
+							CreatedDate = roll.CreatedDate
+						}).ToList()
+					);
+
+				_logger.LogInformation("Found roll confirmations for {Count} allot IDs", groupedResults.Count);
+				return Ok(groupedResults);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error fetching roll confirmations for multiple allot IDs");
 				return StatusCode(500, $"Internal server error: {ex.Message}");
 			}
 		}

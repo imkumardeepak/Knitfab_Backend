@@ -1,6 +1,7 @@
 using AvyyanBackend.DTOs.DispatchPlanning;
 using AvyyanBackend.Services;
 using Microsoft.AspNetCore.Mvc;
+using Npgsql;
 
 namespace AvyyanBackend.Controllers
 {
@@ -30,6 +31,36 @@ namespace AvyyanBackend.Controllers
                 return NotFound();
 
             return Ok(dispatchPlanning);
+        }
+
+        // GET api/DispatchPlanning/by-dispatch-order/{dispatchOrderId}
+        [HttpGet("by-dispatch-order/{dispatchOrderId}")]
+        public async Task<ActionResult<IEnumerable<DispatchPlanningDto>>> GetByDispatchOrderId(string dispatchOrderId)
+        {
+            try
+            {
+                var dispatchPlannings = await _service.GetByDispatchOrderIdAsync(dispatchOrderId);
+                return Ok(dispatchPlannings);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // GET api/DispatchPlanning/fully-dispatched-orders - Get unique fully dispatched dispatch order IDs with details
+        [HttpGet("fully-dispatched-orders")]
+        public async Task<ActionResult<IEnumerable<object>>> GetFullyDispatchedOrders()
+        {
+            try
+            {
+                var orders = await _service.GetFullyDispatchedOrdersAsync();
+                return Ok(orders);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPost]
@@ -85,9 +116,23 @@ namespace AvyyanBackend.Controllers
                 var dispatchedRoll = await _service.CreateDispatchedRollAsync(dto);
                 return CreatedAtAction(nameof(GetDispatchedRolls), new { id = dispatchedRoll.Id }, dispatchedRoll);
             }
-            catch (Exception ex)
+            catch (ArgumentException ex)
             {
                 return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("already exists"))
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                // Log the general exception for debugging purposes
+                Console.WriteLine($"Error creating dispatched roll: {ex.Message}");
+                return StatusCode(500, new { message = "An error occurred while creating the dispatched roll." });
             }
         }
         
@@ -98,6 +143,10 @@ namespace AvyyanBackend.Controllers
             {
                 var dispatchedRolls = await _service.CreateDispatchedRollsBulkAsync(dtos);
                 return Ok(dispatchedRolls);
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("already exists"))
+            {
+                return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -150,5 +199,37 @@ namespace AvyyanBackend.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+        
+        // New endpoint to delete a specific dispatched roll
+        [HttpDelete("dispatched-rolls/{id}")]
+        public async Task<IActionResult> DeleteDispatchedRoll(int id)
+        {            var result = await _service.DeleteDispatchedRollAsync(id);
+            if (!result)
+                return NotFound();
+
+            return NoContent();
+        }
+
+        // NOTE: This endpoint was partially implemented but not completed.
+        // The frontend now uses optimized individual endpoints with bulk fetching instead.
+        /*
+        /// <summary>
+        /// Get complete dispatch planning summary for selected voucher numbers
+        /// This endpoint aggregates all data needed for dispatch planning in one call
+        /// </summary>
+        [HttpPost("summary")]
+        public async Task<ActionResult> GetDispatchPlanningSummary([FromBody] DispatchPlanningSummaryRequestDto request)
+        {
+            try
+            {
+                var summary = await _service.GetDispatchPlanningSummaryAsync(request.VoucherNumbers);
+                return Ok(summary);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+        */
     }
 }
