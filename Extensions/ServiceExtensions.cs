@@ -78,6 +78,7 @@ namespace AvyyanBackend.Extensions
 
             // Register SignalR notification service
             services.AddScoped<ISignalRNotificationService, SignalRNotificationService>();
+            services.AddScoped<IReportService, ReportService>();
 
             return services;
         }
