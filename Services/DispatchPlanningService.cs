@@ -53,7 +53,7 @@ namespace AvyyanBackend.Services
             var updated = await _repository.UpdateAsync(id, dispatchPlanning);
             
             // Check if required rolls match dispatched rolls to determine status
-            updated.IsFullyDispatched = updated.TotalRequiredRolls <= updated.TotalDispatchedRolls;
+            //updated.IsFullyDispatched = updated.TotalRequiredRolls <= updated.TotalDispatchedRolls;
             
             return _mapper.Map<DispatchPlanningDto>(updated);
         }
