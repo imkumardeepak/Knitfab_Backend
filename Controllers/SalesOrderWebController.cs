@@ -196,6 +196,37 @@ namespace AvyyanBackend.Controllers
 		}
 
 		/// <summary>
+		/// Get all voucher numbers from sales orders
+		/// </summary>
+		/// <returns>List of voucher numbers</returns>
+		/// <response code="200">Returns the list of voucher numbers</response>
+		/// <response code="500">Internal server error</response>
+		[HttpGet("voucher-numbers")]
+		[ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
+		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+		public async Task<ActionResult<IEnumerable<string>>> GetVoucherNumbers()
+		{
+			try
+			{
+				_logger.LogInformation("Fetching all voucher numbers");
+				var salesOrdersWeb = await _salesOrderWebService.GetAllAsync();
+				var voucherNumbers = salesOrdersWeb
+					.Select(so => so.VoucherNumber)
+					.Distinct()
+					.OrderBy(v => v)
+					.ToList();
+				_logger.LogInformation("Successfully retrieved {Count} voucher numbers", voucherNumbers.Count);
+				return Ok(voucherNumbers);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error occurred while getting voucher numbers");
+				return StatusCode(StatusCodes.Status500InternalServerError,
+					new { message = "An error occurred while processing your request", error = ex.Message });
+			}
+		}
+
+		/// <summary>
 		/// Get sales orders web count and statistics
 		/// </summary>
 		/// <returns>Statistics about sales orders web</returns>

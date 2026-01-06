@@ -173,12 +173,33 @@ namespace AvyyanBackend.Controllers
         // New endpoint to delete a specific dispatched roll
         [HttpDelete("dispatched-rolls/{id}")]
         public async Task<IActionResult> DeleteDispatchedRoll(int id)
-        {
-            var result = await _service.DeleteDispatchedRollAsync(id);
+        {            var result = await _service.DeleteDispatchedRollAsync(id);
             if (!result)
                 return NotFound();
 
             return NoContent();
         }
+
+        // NOTE: This endpoint was partially implemented but not completed.
+        // The frontend now uses optimized individual endpoints with bulk fetching instead.
+        /*
+        /// <summary>
+        /// Get complete dispatch planning summary for selected voucher numbers
+        /// This endpoint aggregates all data needed for dispatch planning in one call
+        /// </summary>
+        [HttpPost("summary")]
+        public async Task<ActionResult> GetDispatchPlanningSummary([FromBody] DispatchPlanningSummaryRequestDto request)
+        {
+            try
+            {
+                var summary = await _service.GetDispatchPlanningSummaryAsync(request.VoucherNumbers);
+                return Ok(summary);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+        */
     }
 }

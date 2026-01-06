@@ -79,6 +79,42 @@ namespace AvyyanBackend.Controllers
 			}
 		}
 
+		/// <summary>
+		/// Get storage captures by multiple lot numbers
+		/// </summary>
+		[HttpGet("by-lots")]
+		public async Task<ActionResult<IEnumerable<StorageCaptureResponseDto>>> GetStorageCapturesByLots([FromQuery] string lotNumbers)
+		{
+			try
+			{
+				if (string.IsNullOrWhiteSpace(lotNumbers))
+				{
+					return BadRequest("Lot numbers parameter is required");
+				}
+
+				// Split comma-separated lot numbers
+				var lotNumbersList = lotNumbers.Split(',', StringSplitOptions.RemoveEmptyEntries)
+					.Select(l => l.Trim())
+					.Where(l => !string.IsNullOrWhiteSpace(l))
+					.ToList();
+
+				if (!lotNumbersList.Any())
+				{
+					return BadRequest("No valid lot numbers provided");
+				}
+
+				_logger.LogInformation("Fetching storage captures for {Count} lot numbers", lotNumbersList.Count);
+
+				var storageCaptures = await _storageCaptureService.GetStorageCapturesByLotNumbersAsync(lotNumbersList);
+				return Ok(storageCaptures);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error occurred while getting storage captures by lot numbers");
+				return StatusCode(500, "An error occurred while processing your request");
+			}
+		}
+
 
 		/// <summary>
 		/// Create a new storage capture
