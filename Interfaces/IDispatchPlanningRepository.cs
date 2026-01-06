@@ -8,6 +8,8 @@ namespace AvyyanBackend.Interfaces
         Task<IEnumerable<DispatchPlanning>> GetAllAsync();
         Task<DispatchPlanning?> GetByIdAsync(int id);
         Task<DispatchPlanning?> GetByLotNoAsync(string lotNo);
+        Task<IEnumerable<DispatchPlanning>> GetByDispatchOrderIdAsync(string dispatchOrderId);
+        Task<IEnumerable<object>> GetFullyDispatchedOrdersAsync();
         Task<DispatchPlanning> CreateAsync(DispatchPlanning dispatchPlanning);
         Task<DispatchPlanning> UpdateAsync(int id, DispatchPlanning dispatchPlanning);
         Task<bool> DeleteAsync(int id);

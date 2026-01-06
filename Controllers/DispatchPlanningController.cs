@@ -33,6 +33,36 @@ namespace AvyyanBackend.Controllers
             return Ok(dispatchPlanning);
         }
 
+        // GET api/DispatchPlanning/by-dispatch-order/{dispatchOrderId}
+        [HttpGet("by-dispatch-order/{dispatchOrderId}")]
+        public async Task<ActionResult<IEnumerable<DispatchPlanningDto>>> GetByDispatchOrderId(string dispatchOrderId)
+        {
+            try
+            {
+                var dispatchPlannings = await _service.GetByDispatchOrderIdAsync(dispatchOrderId);
+                return Ok(dispatchPlannings);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // GET api/DispatchPlanning/fully-dispatched-orders - Get unique fully dispatched dispatch order IDs with details
+        [HttpGet("fully-dispatched-orders")]
+        public async Task<ActionResult<IEnumerable<object>>> GetFullyDispatchedOrders()
+        {
+            try
+            {
+                var orders = await _service.GetFullyDispatchedOrdersAsync();
+                return Ok(orders);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpPost]
         public async Task<ActionResult<DispatchPlanningDto>> Create(CreateDispatchPlanningDto createDto)
         {

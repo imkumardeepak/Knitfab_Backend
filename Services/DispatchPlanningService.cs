@@ -29,6 +29,17 @@ namespace AvyyanBackend.Services
             return dispatchPlanning == null ? null : _mapper.Map<DispatchPlanningDto>(dispatchPlanning);
         }
 
+        public async Task<IEnumerable<DispatchPlanningDto>> GetByDispatchOrderIdAsync(string dispatchOrderId)
+        {
+            var dispatchPlannings = await _repository.GetByDispatchOrderIdAsync(dispatchOrderId);
+            return _mapper.Map<IEnumerable<DispatchPlanningDto>>(dispatchPlannings);
+        }
+
+        public async Task<IEnumerable<object>> GetFullyDispatchedOrdersAsync()
+        {
+            return await _repository.GetFullyDispatchedOrdersAsync();
+        }
+
         public async Task<DispatchPlanningDto> CreateAsync(CreateDispatchPlanningDto createDto)
         {
             // Generate LoadingNo

@@ -56,6 +56,33 @@ namespace AvyyanBackend.Repositories
                 .FirstOrDefaultAsync(dp => dp.LotNo == lotNo);
         }
 
+        public async Task<IEnumerable<DispatchPlanning>> GetByDispatchOrderIdAsync(string dispatchOrderId)
+        {
+            return await _context.DispatchPlannings
+                .Include(dp => dp.Transport)
+                .Include(dp => dp.Courier)
+                .Where(dp => dp.DispatchOrderId == dispatchOrderId && dp.IsActive)
+                .OrderBy(dp => dp.LoadingNo)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<object>> GetFullyDispatchedOrdersAsync()
+        {
+            // Get distinct dispatch order IDs for fully dispatched orders
+            // Returns: { id, loadingNo, customerName }
+            return await _context.DispatchPlannings
+                .Where(dp => dp.IsFullyDispatched && dp.IsActive)
+                .GroupBy(dp => dp.DispatchOrderId)
+                .Select(g => new
+                {
+                    id = g.Key,
+                    loadingNo = g.First().LoadingNo ?? "N/A",
+                    customerName = g.First().CustomerName ?? "N/A"
+                })
+                .OrderByDescending(o => o.id)
+                .ToListAsync();
+        }
+
         public async Task<DispatchPlanning> UpdateAsync(int id, DispatchPlanning dispatchPlanning)
         {
             var existing = await _context.DispatchPlannings.FindAsync(id);
