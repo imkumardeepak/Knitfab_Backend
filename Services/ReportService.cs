@@ -127,7 +127,8 @@ namespace AvyyanBackend.Services
                             MachineName = rc.MachineName,
                             NetWeight = rc.NetWeight ?? 0,
                             GreyGsm = rc.GreyGsm,
-                            GreyWidth = rc.GreyWidth
+                            GreyWidth = rc.GreyWidth,
+                            FgRollNo = rc.FgRollNo
                         });
                     }
 
