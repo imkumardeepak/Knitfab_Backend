@@ -1611,6 +1611,83 @@ namespace AvyyanBackend.Controllers
 			}
 		}
 
+		// GET api/productionallotment/sales-order/{salesOrderId}/lots - Get all lots for a sales order (without requiring itemId)
+		[HttpGet("sales-order/{salesOrderId}/lots")]
+		public async Task<ActionResult<IEnumerable<ProductionAllotmentResponseDto>>> GetLotsForSalesOrder(int salesOrderId)
+		{
+			try
+			{
+				var productionAllotments = await _context.ProductionAllotments
+					.Include(pa => pa.MachineAllocations)
+					.Where(pa => pa.SalesOrderId == salesOrderId)
+					.ToListAsync();
+
+				var responseDtos = productionAllotments.Select(pa => new ProductionAllotmentResponseDto
+				{
+					Id = pa.Id,
+					AllotmentId = pa.AllotmentId,
+					VoucherNumber = pa.VoucherNumber,
+					ItemName = pa.ItemName,
+					SalesOrderId = pa.SalesOrderId,
+					SalesOrderItemId = pa.SalesOrderItemId,
+					ActualQuantity = pa.ActualQuantity,
+					YarnCount = pa.YarnCount,
+					Diameter = pa.Diameter,
+					Gauge = pa.Gauge,
+					FabricType = pa.FabricType,
+					SlitLine = pa.SlitLine,
+					StitchLength = pa.StitchLength,
+					Efficiency = pa.Efficiency,
+					Composition = pa.Composition,
+					TotalProductionTime = pa.TotalProductionTime,
+					CreatedDate = pa.CreatedDate,
+					YarnLotNo = pa.YarnLotNo,
+					Counter = pa.Counter,
+					ColourCode = pa.ColourCode,
+					ReqGreyGsm = pa.ReqGreyGsm,
+					ReqGreyWidth = pa.ReqGreyWidth,
+					ReqFinishGsm = pa.ReqFinishGsm,
+					ReqFinishWidth = pa.ReqFinishWidth,
+					YarnPartyName = pa.YarnPartyName,
+					PolybagColor = pa.PolybagColor,
+					PartyName = pa.PartyName,
+					OtherReference = pa.OtherReference,
+					TubeWeight = pa.TubeWeight,
+					ShrinkRapWeight = pa.ShrinkRapWeight,
+					TotalWeight = pa.TotalWeight,
+					TapeColor = pa.TapeColor,
+					SerialNo = pa.SerialNo,
+					ProductionStatus = pa.ProductionStatus,
+					IsOnHold = pa.ProductionStatus == 1,
+					IsSuspended = pa.ProductionStatus == 2,
+					MachineAllocations = pa.MachineAllocations.Select(ma => new MachineAllocationResponseDto
+					{
+						Id = ma.Id,
+						ProductionAllotmentId = ma.ProductionAllotmentId,
+						MachineName = ma.MachineName,
+						MachineId = ma.MachineId,
+						NumberOfNeedles = ma.NumberOfNeedles,
+						Feeders = ma.Feeders,
+						RPM = ma.RPM,
+						RollPerKg = ma.RollPerKg,
+						TotalLoadWeight = ma.TotalLoadWeight,
+						TotalRolls = ma.TotalRolls,
+						RollBreakdown = !string.IsNullOrEmpty(ma.RollBreakdown)
+							? System.Text.Json.JsonSerializer.Deserialize<DTOs.ProAllotDto.RollBreakdown>(ma.RollBreakdown)
+							: new DTOs.ProAllotDto.RollBreakdown(),
+						EstimatedProductionTime = ma.EstimatedProductionTime
+					}).ToList()
+				}).ToList();
+
+				return Ok(responseDtos);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error fetching lots for sales order: {SalesOrderId}", salesOrderId);
+				return StatusCode(500, $"Internal server error: {ex.Message}");
+			}
+		}
+
 		// GET api/productionallotment/sales-order/{salesOrderId}/items/{salesOrderItemId}/lots - Get lots for a sales order item
 		[HttpGet("sales-order/{salesOrderId}/items/{salesOrderItemId}/lots")]
 		public async Task<ActionResult<IEnumerable<ProductionAllotmentResponseDto>>> GetLotsForSalesOrderItem(int salesOrderId, int salesOrderItemId)
