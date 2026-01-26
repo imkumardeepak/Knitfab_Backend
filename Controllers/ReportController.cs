@@ -24,6 +24,13 @@ namespace AvyyanBackend.Controllers
             return Ok(report);
         }
 
+        [HttpGet("fabric-stock-report")]
+        public async Task<ActionResult<List<FabricStockReportDto>>> GetFabricStockReport()
+        {
+            var report = await _reportService.GetFabricStockReportAsync();
+            return Ok(report);
+        }
+
         [HttpGet("final-fabric-report/{salesOrderId}")]
         public async Task<ActionResult<FinalFabricReportDto>> GetFinalFabricReportBySalesOrder(int salesOrderId)
         {
