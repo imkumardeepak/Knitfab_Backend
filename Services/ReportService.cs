@@ -253,6 +253,8 @@ namespace AvyyanBackend.Services
                 var dto = new FabricStockReportDto
                 {
                     LotNo = pa.AllotmentId,
+                    VoucherNumber = pa.VoucherNumber,
+                    ItemName = pa.ItemName,
                     CustomerName = pa.PartyName ?? "Unknown",
                     OrderQuantity = pa.ActualQuantity,
                     RequiredRolls = requiredRolls,

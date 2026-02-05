@@ -5,6 +5,8 @@ namespace AvyyanBackend.DTOs.Report
     public class FabricStockReportDto
     {
         public string LotNo { get; set; }
+        public string VoucherNumber { get; set; }
+        public string ItemName { get; set; }
         public string CustomerName { get; set; }
         public decimal OrderQuantity { get; set; }
         public decimal RequiredRolls { get; set; }
