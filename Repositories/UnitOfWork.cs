@@ -3,6 +3,7 @@ using AvyyanBackend.Data;
 using AvyyanBackend.Interfaces;
 using AvyyanBackend.Models;
 using AvyyanBackend.Models.ProAllot;
+using Microsoft.EntityFrameworkCore;
 
 namespace AvyyanBackend.Repositories
 {
@@ -57,6 +58,11 @@ namespace AvyyanBackend.Repositories
                 await _transaction.DisposeAsync();
                 _transaction = null;
             }
+        }
+
+        public async Task<int> ExecuteSqlAsync(string sql, params object[] parameters)
+        {
+            return await _context.Database.ExecuteSqlRawAsync(sql, parameters);
         }
 
         public void Dispose()

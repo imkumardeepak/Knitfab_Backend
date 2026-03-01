@@ -133,5 +133,71 @@ namespace AvyyanBackend.Services
 
 			return _mapper.Map<IEnumerable<StorageCaptureResponseDto>>(orderedStorageCaptures);
 		}
+
+		public async Task<int> FetchMissingRollsByLotAsync(string lotNo)
+		{
+			_logger.LogInformation("Fetching missing rolls for lot: {LotNo}", lotNo);
+
+			string sql = @"
+WITH base_data AS (
+    SELECT DISTINCT ON (""LotNo"")
+        ""LotNo"",
+        ""LocationCode"",
+        ""Tape"",
+        ""CustomerName"",
+        ""CreatedBy"",
+        ""UpdatedBy""
+    FROM ""StorageCaptures""
+    WHERE ""LotNo"" = @p0
+),
+missing_fg AS (
+    SELECT
+        rc.""FgRollNo""::int AS fg_no
+    FROM ""RollConfirmations"" rc
+    LEFT JOIN ""StorageCaptures"" sc
+        ON sc.""LotNo"" = rc.""AllotId""
+       AND sc.""FGRollNo""::int = rc.""FgRollNo""::int
+    WHERE rc.""AllotId"" = @p0
+      AND rc.""FgRollNo"" IS NOT NULL         
+      AND sc.""FGRollNo"" IS NULL
+)
+INSERT INTO ""StorageCaptures"" (
+    ""LotNo"",
+    ""FGRollNo"",
+    ""LocationCode"",
+    ""Tape"",
+    ""CustomerName"",
+    ""IsDispatched"",
+    ""CreatedAt"",
+    ""UpdatedAt"",
+    ""CreatedBy"",
+    ""UpdatedBy"",
+    ""IsActive""
+)
+SELECT
+    b.""LotNo"",
+    m.fg_no::text,
+    b.""LocationCode"",
+    b.""Tape"",
+    b.""CustomerName"",
+    false,
+    NOW(),
+    NOW(),
+    b.""CreatedBy"",
+    b.""UpdatedBy"",
+    true
+FROM missing_fg m
+CROSS JOIN base_data b
+ORDER BY m.fg_no;";
+
+			// Using Apply explicitly if needed, but here we can just use the context from unitOfWork if possible
+			// However, StorageCaptureService uses IRepository and IUnitOfWork abstractions.
+			// Let's see if ApplicationDbContext is available. 
+			// In many of these setups, IUnitOfWork or the repository might expose the context or we might need to inject it.
+			// Looking at the constructor, ApplicationDbContext is not injected.
+			// But wait, I see IUnitOfWork and IRepository.
+			// Let's check UnitOfWork.cs to see if it exposes the context.
+			return await _unitOfWork.ExecuteSqlAsync(sql, lotNo);
+		}
 	}
 }

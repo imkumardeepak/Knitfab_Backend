@@ -256,6 +256,29 @@ namespace AvyyanBackend.Controllers
 		}
 
 		/// <summary>
+		/// Fetch missing rolls for a given lot number
+		/// </summary>
+		[HttpPost("fetch-missing/{lotNo}")]
+		public async Task<ActionResult<int>> FetchMissingRolls(string lotNo)
+		{
+			try
+			{
+				if (string.IsNullOrWhiteSpace(lotNo))
+				{
+					return BadRequest("Lot number is required");
+				}
+
+				var rollsAdded = await _storageCaptureService.FetchMissingRollsByLotAsync(lotNo);
+				return Ok(rollsAdded);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error fetching missing rolls for lot {LotNo}", lotNo);
+				return StatusCode(500, "An error occurred while fetching missing rolls");
+			}
+		}
+
+		/// <summary>
 		/// Update a storage capture
 		/// </summary>
 		[HttpPut("{id}")]

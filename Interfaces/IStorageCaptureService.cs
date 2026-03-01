@@ -11,5 +11,6 @@ namespace AvyyanBackend.Interfaces
 		Task<bool> DeleteStorageCaptureAsync(int id);
 		Task<IEnumerable<StorageCaptureResponseDto>> SearchStorageCapturesAsync(StorageCaptureSearchRequestDto searchDto);
 		Task<IEnumerable<StorageCaptureResponseDto>> GetStorageCapturesByLotNumbersAsync(List<string> lotNumbers);
+		Task<int> FetchMissingRollsByLotAsync(string lotNo);
 	}
 }
