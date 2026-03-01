@@ -76,6 +76,7 @@ namespace AvyyanBackend.DTOs.Report
         public decimal GreyGsm { get; set; }
         public decimal GreyWidth { get; set; }
         public int? FgRollNo { get; set; }
+        public DateTime CreatedDate { get; set; }
     }
 
     public class DispatchPlanningReportDto

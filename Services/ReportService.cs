@@ -178,7 +178,8 @@ namespace AvyyanBackend.Services
                     NetWeight = rc.NetWeight ?? 0,
                     GreyGsm = rc.GreyGsm,
                     GreyWidth = rc.GreyWidth,
-                    FgRollNo = rc.FgRollNo
+                    FgRollNo = rc.FgRollNo,
+                    CreatedDate = rc.CreatedDate
                 }).ToList();
             }
 
