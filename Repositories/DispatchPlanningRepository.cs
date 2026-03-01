@@ -69,18 +69,33 @@ namespace AvyyanBackend.Repositories
         public async Task<IEnumerable<object>> GetFullyDispatchedOrdersAsync()
         {
             // Get distinct dispatch order IDs for fully dispatched orders
-            // Returns: { id, loadingNo, customerName }
-            return await _context.DispatchPlannings
+            var groups = await _context.DispatchPlannings
                 .Where(dp => dp.IsFullyDispatched && dp.IsActive)
                 .GroupBy(dp => dp.DispatchOrderId)
                 .Select(g => new
                 {
                     id = g.Key,
                     loadingNo = g.First().LoadingNo ?? "N/A",
-                    customerName = g.First().CustomerName ?? "N/A"
+                    customerName = g.First().CustomerName ?? "N/A",
+                    dispatchDate = g.Max(x => x.DispatchEndDate ?? x.DispatchStartDate ?? x.UpdatedAt),
+                    salesOrderIds = g.Select(x => x.SalesOrderId).Distinct().ToList()
                 })
                 .OrderByDescending(o => o.id)
                 .ToListAsync();
+
+            var allSalesOrderIds = groups.SelectMany(g => g.salesOrderIds).Distinct().ToList();
+            var salesOrders = await _context.SalesOrdersWeb
+                .Where(so => allSalesOrderIds.Contains(so.Id))
+                .ToDictionaryAsync(so => so.Id, so => so.VoucherNumber);
+
+            return groups.Select(g => new
+            {
+                id = g.id,
+                loadingNo = g.loadingNo,
+                customerName = g.customerName,
+                dispatchDate = g.dispatchDate,
+                voucherNumbers = string.Join(", ", g.salesOrderIds.Select(sid => salesOrders.ContainsKey(sid) ? salesOrders[sid] : "Unknown").Distinct())
+            });
         }
 
         public async Task<DispatchPlanning> UpdateAsync(int id, DispatchPlanning dispatchPlanning)
