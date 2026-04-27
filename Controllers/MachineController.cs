@@ -4,6 +4,7 @@ using AvyyanBackend.Interfaces;
 using AvyyanBackend.Models.ProAllot;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using AvyyanBackend.Filters;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -14,6 +15,7 @@ namespace AvyyanBackend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [RequirePermission("Machine Master")]
     [Authorize]
     public class MachineController : ControllerBase
     {

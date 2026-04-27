@@ -1,8 +1,9 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AvyyanBackend.Data;
+﻿using AvyyanBackend.Data;
 using AvyyanBackend.Models;
 using AvyyanBackend.Models.ProAllot;
 using AvyyanBackend.Models.ProductionConfirmation;
 using Microsoft.AspNetCore.Mvc;
+using AvyyanBackend.Filters;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 
@@ -120,7 +121,7 @@ namespace AvyyanBackend.Controllers
 
 				try
 				{
-					// 1️⃣ Validate Sales Order
+					// 1?? Validate Sales Order
 					var so = soList.FirstOrDefault(x => x.VoucherNumber.Trim() == voucherNo);
 					if (so == null)
 					{
@@ -134,7 +135,7 @@ namespace AvyyanBackend.Controllers
 						continue;
 					}
 
-					// 2️⃣ Validate Item belongs to the same SalesOrder
+					// 2?? Validate Item belongs to the same SalesOrder
 					var soItem = soItemList.FirstOrDefault(x => x.SalesOrderWebId == so.Id && x.ItemName.Trim() == itemName);
 
 					if (soItem == null)
@@ -176,7 +177,7 @@ namespace AvyyanBackend.Controllers
 						((soItem.FabricType ?? "").Trim().ToLower())
 					);
 
-					// 3️⃣ LOT already exists or not
+					// 3?? LOT already exists or not
 					var lot = lotList.FirstOrDefault(x => x.AllotmentId == lotNo);
 
 					if (lot == null)
@@ -212,7 +213,7 @@ namespace AvyyanBackend.Controllers
 					}
 
 					int rollCount = 0;
-					// 4️⃣ Prepare Rolls for bulk insert
+					// 4?? Prepare Rolls for bulk insert
 					foreach (FgRollDto r in v.rolls)
 					{
 						string machineName = r.machineNo.Trim();
@@ -360,4 +361,5 @@ namespace AvyyanBackend.Controllers
 		public bool? isDispatched { get; set; }
 	}
 }
+
 
