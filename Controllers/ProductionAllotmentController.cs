@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AutoMapper;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AutoMapper;
 using AvyyanBackend.Data;
 using AvyyanBackend.DTOs.ProAllotDto;
 using AvyyanBackend.Models.ProAllot;
@@ -908,6 +908,13 @@ namespace AvyyanBackend.Controllers
 				if (!ModelState.IsValid)
 					return BadRequest(ModelState);
 
+				if (request.MachineAllocations == null || !request.MachineAllocations.Any())
+				{
+					return BadRequest("At least one machine allocation is required.");
+				}
+
+				using var transaction = await _context.Database.BeginTransactionAsync();
+
 				// Generate the next serial number
 				var nextSerialNumber = await GenerateNextSerialNumber();
 
@@ -915,6 +922,112 @@ namespace AvyyanBackend.Controllers
 				if (await _context.ProductionAllotments.AnyAsync(pa => pa.AllotmentId == request.AllotmentId))
 				{
 					return Conflict($"Allotment ID {request.AllotmentId} already exists.");
+				}
+
+				var finalNewLotQuantity = request.ActualQuantity;
+
+				if (request.IsSplitLotCreation && request.LotAdjustments != null && request.LotAdjustments.Any())
+				{
+					var salesOrder = await _context.SalesOrdersWeb
+						.Include(so => so.Items)
+						.FirstOrDefaultAsync(so => so.Id == request.SalesOrderId);
+
+					if (salesOrder == null)
+					{
+						return NotFound($"Sales order {request.SalesOrderId} not found.");
+					}
+
+					var salesOrderItem = salesOrder.Items.FirstOrDefault(item => item.Id == request.SalesOrderItemId);
+					if (salesOrderItem == null)
+					{
+						return NotFound($"Sales order item {request.SalesOrderItemId} not found in sales order {request.SalesOrderId}.");
+					}
+
+					var existingLots = await _context.ProductionAllotments
+						.Include(pa => pa.MachineAllocations)
+						.Where(pa => pa.SalesOrderId == request.SalesOrderId && pa.SalesOrderItemId == request.SalesOrderItemId)
+						.ToListAsync();
+
+					if (!existingLots.Any())
+					{
+						return BadRequest("No existing lots were found for this sales order item.");
+					}
+
+					var allotmentIds = existingLots.Select(lot => lot.AllotmentId).ToList();
+					var readyWeightByAllotment = await _context.RollConfirmations
+						.Where(rc => allotmentIds.Contains(rc.AllotId))
+						.GroupBy(rc => rc.AllotId)
+						.Select(group => new
+						{
+							AllotmentId = group.Key,
+							ReadyNetWeight = group.Sum(rc => rc.NetWeight ?? 0m)
+						})
+						.ToDictionaryAsync(item => item.AllotmentId, item => Math.Round(item.ReadyNetWeight, 3));
+
+					foreach (var adjustment in request.LotAdjustments)
+					{
+						var existingLot = existingLots.FirstOrDefault(lot => lot.Id == adjustment.LotId);
+						if (existingLot == null)
+						{
+							return BadRequest($"Lot {adjustment.LotId} does not belong to sales order item {request.SalesOrderItemId}.");
+						}
+
+						var readyNetWeight = readyWeightByAllotment.GetValueOrDefault(existingLot.AllotmentId, 0m);
+						decimal finalQuantity;
+
+						if (adjustment.MarkAsComplete)
+						{
+							if (readyNetWeight <= 0)
+							{
+								return BadRequest($"Cannot complete lot {existingLot.AllotmentId}: no ready net weight has been produced yet.");
+							}
+
+							finalQuantity = readyNetWeight;
+							existingLot.ProductionStatus = 2;
+						}
+						else
+						{
+							finalQuantity = Math.Round(adjustment.FinalQuantity, 3);
+
+							if (finalQuantity <= 0)
+							{
+								return BadRequest($"Lot {existingLot.AllotmentId} must keep a planned quantity greater than zero.");
+							}
+
+							if (finalQuantity > existingLot.ActualQuantity)
+							{
+								return BadRequest($"Lot {existingLot.AllotmentId} cannot keep more than its current planned quantity ({existingLot.ActualQuantity:F3} kg).");
+							}
+
+							existingLot.ProductionStatus = 3;
+						}
+
+						existingLot.ActualQuantity = finalQuantity;
+						RecalculateMachineAllocationsForQuantity(existingLot, finalQuantity);
+					}
+
+					var totalExistingPlannedQuantity = existingLots.Sum(lot => lot.ActualQuantity);
+					finalNewLotQuantity = Math.Round(salesOrderItem.Qty - totalExistingPlannedQuantity, 3);
+
+					if (finalNewLotQuantity <= 0)
+					{
+						return BadRequest(new
+						{
+							Message = "No remaining quantity is available for a new lot after the selected lot adjustments.",
+							SalesOrderItemQuantity = salesOrderItem.Qty,
+							ExistingPlannedQuantity = totalExistingPlannedQuantity
+						});
+					}
+
+					if (request.ActualQuantity > 0 && Math.Abs(request.ActualQuantity - finalNewLotQuantity) > 0.01m)
+					{
+						return BadRequest(new
+						{
+							Message = $"New lot quantity mismatch. Expected {finalNewLotQuantity:F3} kg but received {request.ActualQuantity:F3} kg.",
+							ExpectedQuantity = finalNewLotQuantity,
+							ReceivedQuantity = request.ActualQuantity
+						});
+					}
 				}
 
 				// Create production allotment using the allotmentId from the request
@@ -925,7 +1038,7 @@ namespace AvyyanBackend.Controllers
 					ItemName = request.ItemName,
 					SalesOrderId = request.SalesOrderId,
 					SalesOrderItemId = request.SalesOrderItemId,
-					ActualQuantity = request.ActualQuantity,
+					ActualQuantity = finalNewLotQuantity,
 					YarnCount = request.YarnCount,
 					Diameter = request.Diameter,
 					Gauge = request.Gauge,
@@ -950,6 +1063,7 @@ namespace AvyyanBackend.Controllers
 					TotalWeight = request.TotalWeight,
 					TapeColor = request.TapeColor,
 					SerialNo = nextSerialNumber, // Assign the generated serial number
+					ProductionStatus = request.IsSplitLotCreation ? 3 : 0,
 					TotalProductionTime = request.MachineAllocations.Max(ma => ma.EstimatedProductionTime),
 					MachineAllocations = request.MachineAllocations.Select(ma => new MachineAllocation
 					{
@@ -969,13 +1083,15 @@ namespace AvyyanBackend.Controllers
 				// Save to database
 				_context.ProductionAllotments.Add(productionAllotment);
 				await _context.SaveChangesAsync();
+				await transaction.CommitAsync();
 
 				return Ok(new
 				{
 					Success = true,
 					AllotmentId = request.AllotmentId,
 					ProductionAllotmentId = productionAllotment.Id,
-					SerialNo = nextSerialNumber
+					SerialNo = nextSerialNumber,
+					ActualQuantity = finalNewLotQuantity
 				});
 			}
 			catch (Exception ex)
@@ -1763,6 +1879,330 @@ namespace AvyyanBackend.Controllers
 				_logger.LogError(ex, "Error fetching lots for sales order item: {SalesOrderId}, {SalesOrderItemId}", salesOrderId, salesOrderItemId);
 				return StatusCode(500, $"Internal server error: {ex.Message}");
 			}
+		}
+
+		// GET api/productionallotment/sales-order/{salesOrderId}/allocation-summary
+		// Returns allocation summary for all items in a sales order, including created roll net weights
+		[HttpGet("sales-order/{salesOrderId}/allocation-summary")]
+		public async Task<ActionResult<object>> GetAllocationSummaryForSalesOrder(int salesOrderId)
+		{
+			try
+			{
+				// Get all production allotments for this sales order
+				var productionAllotments = await _context.ProductionAllotments
+					.Include(pa => pa.MachineAllocations)
+					.Where(pa => pa.SalesOrderId == salesOrderId)
+					.ToListAsync();
+
+				// Get all allotment IDs
+				var allotmentIds = productionAllotments.Select(pa => pa.AllotmentId).ToList();
+
+				// Get all roll confirmations for these lots
+				var rollConfirmations = await _context.RollConfirmations
+					.Where(rc => allotmentIds.Contains(rc.AllotId))
+					.ToListAsync();
+
+				// Group by SalesOrderItemId
+				var itemGroups = productionAllotments
+					.GroupBy(pa => pa.SalesOrderItemId)
+					.Select(group =>
+					{
+						var lots = group.Select(pa =>
+						{
+							var lotRollConfirmations = rollConfirmations
+								.Where(rc => rc.AllotId == pa.AllotmentId)
+								.ToList();
+							var createdRollNetWeight = lotRollConfirmations.Sum(rc => rc.NetWeight ?? 0m);
+							var createdRollCount = lotRollConfirmations.Count;
+
+							return new
+							{
+								Id = pa.Id,
+								AllotmentId = pa.AllotmentId,
+								ActualQuantity = pa.ActualQuantity,
+								ProductionStatus = pa.ProductionStatus,
+								IsOnHold = pa.ProductionStatus == 1,
+								IsSuspended = pa.ProductionStatus == 2,
+								CreatedRollNetWeight = createdRollNetWeight,
+								CreatedRollCount = createdRollCount,
+								CreatedDate = pa.CreatedDate,
+								YarnCount = pa.YarnCount,
+								FabricType = pa.FabricType,
+								SlitLine = pa.SlitLine,
+								StitchLength = pa.StitchLength,
+								Composition = pa.Composition,
+								Diameter = pa.Diameter,
+								Gauge = pa.Gauge,
+								MachineAllocations = pa.MachineAllocations.Select(ma => new MachineAllocationResponseDto
+								{
+									Id = ma.Id,
+									ProductionAllotmentId = ma.ProductionAllotmentId,
+									MachineName = ma.MachineName,
+									MachineId = ma.MachineId,
+									NumberOfNeedles = ma.NumberOfNeedles,
+									Feeders = ma.Feeders,
+									RPM = ma.RPM,
+									RollPerKg = ma.RollPerKg,
+									TotalLoadWeight = ma.TotalLoadWeight,
+									TotalRolls = ma.TotalRolls,
+									RollBreakdown = !string.IsNullOrEmpty(ma.RollBreakdown)
+										? System.Text.Json.JsonSerializer.Deserialize<DTOs.ProAllotDto.RollBreakdown>(ma.RollBreakdown)
+										: new DTOs.ProAllotDto.RollBreakdown(),
+									EstimatedProductionTime = ma.EstimatedProductionTime
+								}).ToList()
+							};
+						}).ToList();
+
+						return new
+						{
+							SalesOrderItemId = group.Key,
+							TotalAllottedQuantity = lots.Sum(l => l.ActualQuantity),
+							TotalCreatedRollNetWeight = lots.Sum(l => l.CreatedRollNetWeight),
+							TotalCreatedRollCount = lots.Sum(l => l.CreatedRollCount),
+							LotCount = lots.Count,
+							Lots = lots
+						};
+					}).ToList();
+
+				return Ok(new
+				{
+					SalesOrderId = salesOrderId,
+					Items = itemGroups
+				});
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error fetching allocation summary for sales order: {SalesOrderId}", salesOrderId);
+				return StatusCode(500, $"Internal server error: {ex.Message}");
+			}
+		}
+
+		// DTO for update quantity request
+		public class UpdateLotQuantityRequest
+		{
+			public decimal NewQuantity { get; set; }
+		}
+
+		// PUT api/productionallotment/{id}/update-quantity
+		// Updates a lot's quantity with validation (min = created roll net weight)
+		// Recalculates machine allocations based on per-roll-kg
+		[HttpPut("{id}/update-quantity")]
+		public async Task<ActionResult<object>> UpdateLotQuantity(int id, [FromBody] UpdateLotQuantityRequest request)
+		{
+			try
+			{
+				var productionAllotment = await _context.ProductionAllotments
+					.Include(pa => pa.MachineAllocations)
+					.FirstOrDefaultAsync(pa => pa.Id == id);
+
+				if (productionAllotment == null)
+				{
+					return NotFound($"Production allotment with ID {id} not found.");
+				}
+
+				// Get created roll net weight for validation
+				var rollConfirmations = await _context.RollConfirmations
+					.Where(rc => rc.AllotId == productionAllotment.AllotmentId)
+					.ToListAsync();
+
+				var createdRollNetWeight = rollConfirmations.Sum(rc => rc.NetWeight ?? 0m);
+
+				// Validation: Cannot reduce below created roll net weight
+				if (request.NewQuantity < createdRollNetWeight)
+				{
+					return BadRequest(new
+					{
+						Message = $"Cannot reduce quantity below created roll net weight ({createdRollNetWeight:F3} kg). Total net weight of {rollConfirmations.Count} created rolls is {createdRollNetWeight:F3} kg.",
+						CreatedRollNetWeight = createdRollNetWeight,
+						CreatedRollCount = rollConfirmations.Count
+					});
+				}
+
+				// Validation: Quantity must be positive
+				if (request.NewQuantity <= 0)
+				{
+					return BadRequest("Quantity must be greater than zero.");
+				}
+
+				var oldQuantity = productionAllotment.ActualQuantity;
+				productionAllotment.ActualQuantity = request.NewQuantity;
+
+				RecalculateMachineAllocationsForQuantity(productionAllotment, request.NewQuantity);
+
+				await _context.SaveChangesAsync();
+
+				// Return updated data
+				return Ok(new
+				{
+					Success = true,
+					Message = $"Lot quantity updated from {oldQuantity:F3} to {request.NewQuantity:F3} kg",
+					Id = productionAllotment.Id,
+					AllotmentId = productionAllotment.AllotmentId,
+					OldQuantity = oldQuantity,
+					NewQuantity = request.NewQuantity,
+					CreatedRollNetWeight = createdRollNetWeight,
+					MachineAllocations = productionAllotment.MachineAllocations?.Select(ma => new MachineAllocationResponseDto
+					{
+						Id = ma.Id,
+						ProductionAllotmentId = ma.ProductionAllotmentId,
+						MachineName = ma.MachineName,
+						MachineId = ma.MachineId,
+						NumberOfNeedles = ma.NumberOfNeedles,
+						Feeders = ma.Feeders,
+						RPM = ma.RPM,
+						RollPerKg = ma.RollPerKg,
+						TotalLoadWeight = ma.TotalLoadWeight,
+						TotalRolls = ma.TotalRolls,
+						RollBreakdown = !string.IsNullOrEmpty(ma.RollBreakdown)
+							? System.Text.Json.JsonSerializer.Deserialize<DTOs.ProAllotDto.RollBreakdown>(ma.RollBreakdown)
+							: new DTOs.ProAllotDto.RollBreakdown(),
+						EstimatedProductionTime = ma.EstimatedProductionTime
+					}).ToList()
+				});
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error updating lot quantity for production allotment: {Id}", id);
+				return StatusCode(500, $"Internal server error: {ex.Message}");
+			}
+		}
+
+		// PUT api/productionallotment/{id}/complete-lot
+		// Completes a lot: sets quantity to total net weight of created rolls, returns remaining quantity
+		[HttpPut("{id}/complete-lot")]
+		public async Task<ActionResult<object>> CompleteLot(int id)
+		{
+			try
+			{
+				var productionAllotment = await _context.ProductionAllotments
+					.Include(pa => pa.MachineAllocations)
+					.FirstOrDefaultAsync(pa => pa.Id == id);
+
+				if (productionAllotment == null)
+				{
+					return NotFound($"Production allotment with ID {id} not found.");
+				}
+
+				// Get created roll net weight
+				var rollConfirmations = await _context.RollConfirmations
+					.Where(rc => rc.AllotId == productionAllotment.AllotmentId)
+					.ToListAsync();
+
+				var createdRollNetWeight = rollConfirmations.Sum(rc => rc.NetWeight ?? 0m);
+
+				if (createdRollNetWeight <= 0)
+				{
+					return BadRequest("Cannot complete lot: no rolls have been created yet.");
+				}
+
+				var oldQuantity = productionAllotment.ActualQuantity;
+				var remainingQuantity = oldQuantity - createdRollNetWeight;
+
+				// Set the lot quantity to the created roll net weight
+				productionAllotment.ActualQuantity = createdRollNetWeight;
+
+				// Mark as completed (suspended status = 2 means no more production needed)
+				productionAllotment.ProductionStatus = 2;
+
+				RecalculateMachineAllocationsForQuantity(productionAllotment, createdRollNetWeight);
+
+				await _context.SaveChangesAsync();
+
+				return Ok(new
+				{
+					Success = true,
+					Message = $"Lot completed. Quantity set to {createdRollNetWeight:F3} kg (created roll weight). Remaining: {Math.Max(remainingQuantity, 0):F3} kg",
+					Id = productionAllotment.Id,
+					AllotmentId = productionAllotment.AllotmentId,
+					SalesOrderId = productionAllotment.SalesOrderId,
+					SalesOrderItemId = productionAllotment.SalesOrderItemId,
+					OldQuantity = oldQuantity,
+					CompletedQuantity = createdRollNetWeight,
+					RemainingQuantity = Math.Max(remainingQuantity, 0),
+					CreatedRollCount = rollConfirmations.Count,
+					ItemName = productionAllotment.ItemName,
+					VoucherNumber = productionAllotment.VoucherNumber
+				});
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error completing lot for production allotment: {Id}", id);
+				return StatusCode(500, $"Internal server error: {ex.Message}");
+			}
+		}
+
+		private void RecalculateMachineAllocationsForQuantity(ProductionAllotment productionAllotment, decimal targetQuantity)
+		{
+			if (productionAllotment.MachineAllocations == null || !productionAllotment.MachineAllocations.Any())
+			{
+				productionAllotment.TotalProductionTime = 0;
+				return;
+			}
+
+			var totalExistingLoad = productionAllotment.MachineAllocations.Sum(ma => ma.TotalLoadWeight);
+			var ratio = totalExistingLoad > 0 ? targetQuantity / totalExistingLoad : 1m;
+
+			foreach (var machineAllocation in productionAllotment.MachineAllocations)
+			{
+				machineAllocation.TotalLoadWeight = Math.Round(machineAllocation.TotalLoadWeight * ratio, 3);
+				machineAllocation.EstimatedProductionTime = Math.Round(machineAllocation.EstimatedProductionTime * ratio, 2);
+
+				if (machineAllocation.RollPerKg > 0)
+				{
+					var exactTotalRolls = machineAllocation.TotalLoadWeight / machineAllocation.RollPerKg;
+					machineAllocation.TotalRolls = Math.Ceiling(exactTotalRolls);
+					machineAllocation.RollBreakdown = System.Text.Json.JsonSerializer.Serialize(
+						BuildRollBreakdown(exactTotalRolls, machineAllocation.RollPerKg)
+					);
+				}
+				else
+				{
+					machineAllocation.TotalRolls = 0;
+					machineAllocation.RollBreakdown = System.Text.Json.JsonSerializer.Serialize(
+						new DTOs.ProAllotDto.RollBreakdown
+						{
+							WholeRolls = new List<DTOs.ProAllotDto.RollItem>(),
+							FractionalRoll = null
+						}
+					);
+				}
+			}
+
+			productionAllotment.TotalProductionTime = productionAllotment.MachineAllocations.Sum(ma => ma.EstimatedProductionTime);
+		}
+
+		private DTOs.ProAllotDto.RollBreakdown BuildRollBreakdown(decimal exactTotalRolls, decimal rollPerKg)
+		{
+			var wholeRolls = (int)Math.Floor(exactTotalRolls);
+			var fractionalPart = exactTotalRolls - wholeRolls;
+			var rollBreakdown = new DTOs.ProAllotDto.RollBreakdown
+			{
+				WholeRolls = new List<DTOs.ProAllotDto.RollItem>(),
+				FractionalRoll = null
+			};
+
+			if (wholeRolls > 0)
+			{
+				rollBreakdown.WholeRolls.Add(new DTOs.ProAllotDto.RollItem
+				{
+					Quantity = wholeRolls,
+					WeightPerRoll = rollPerKg,
+					TotalWeight = Math.Round(wholeRolls * rollPerKg, 3)
+				});
+			}
+
+			if (fractionalPart > 0.001m)
+			{
+				var fractionalWeight = Math.Round(fractionalPart * rollPerKg, 3);
+				rollBreakdown.FractionalRoll = new DTOs.ProAllotDto.RollItem
+				{
+					Quantity = 1,
+					WeightPerRoll = fractionalWeight,
+					TotalWeight = fractionalWeight
+				};
+			}
+
+			return rollBreakdown;
 		}
 
 	}

@@ -39,8 +39,17 @@ namespace AvyyanBackend.DTOs.ProAllotDto
 		public decimal? ShrinkRapWeight { get; set; }
 		public decimal? TotalWeight { get; set; }
 		public string TapeColor { get; set; }
+		public bool IsSplitLotCreation { get; set; }
+		public List<ExistingLotAdjustmentRequest>? LotAdjustments { get; set; }
 
 		public List<MachineAllocationRequest> MachineAllocations { get; set; }
+	}
+
+	public class ExistingLotAdjustmentRequest
+	{
+		public int LotId { get; set; }
+		public decimal FinalQuantity { get; set; }
+		public bool MarkAsComplete { get; set; }
 	}
 
 	public class MachineAllocationRequest
@@ -121,7 +130,7 @@ namespace AvyyanBackend.DTOs.ProAllotDto
 		public string SerialNo { get; set; } // New Serial Number field
 		public bool IsOnHold { get; set; } // For backward compatibility
 		public bool IsSuspended { get; set; } // For backward compatibility
-		public int ProductionStatus { get; set; } // New field for unified production status (0 = normal, 1 = on hold, 2 = suspended)
+		public int ProductionStatus { get; set; } // 0 = active, 1 = on hold, 2 = completed, 3 = partly completed
 		public List<MachineAllocationResponseDto> MachineAllocations { get; set; } = new List<MachineAllocationResponseDto>();
 	}
 

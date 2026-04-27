@@ -147,11 +147,11 @@ namespace AvyyanBackend.Services
                 updateSalesOrderWebDto.TotalAmount = updateSalesOrderWebDto.Items.Sum(item => item.Amount);
             }
 
-			// Update items
-			UpdateSalesOrderWebItems(salesOrderWeb, updateSalesOrderWebDto.Items);
-
-			// Update main sales order properties
+			// Update main sales order properties FIRST (Items collection is ignored by AutoMapper)
 			_mapper.Map(updateSalesOrderWebDto, salesOrderWeb);
+
+			// Then update items with proper ID preservation
+			UpdateSalesOrderWebItems(salesOrderWeb, updateSalesOrderWebDto.Items);
             salesOrderWeb.UpdatedAt = DateTime.UtcNow;
             // UpdatedBy should already be mapped from the DTO, but ensure it's set
             if (string.IsNullOrEmpty(salesOrderWeb.UpdatedBy))
