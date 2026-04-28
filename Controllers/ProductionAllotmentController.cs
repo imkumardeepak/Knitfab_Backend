@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AutoMapper;
+﻿using AutoMapper;
 using AvyyanBackend.Data;
 using AvyyanBackend.DTOs.ProAllotDto;
 using AvyyanBackend.Models.ProAllot;
@@ -6,6 +6,7 @@ using AvyyanBackend.Models.ProductionConfirmation;
 using AvyyanBackend.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using AvyyanBackend.Filters;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Net;
@@ -470,7 +471,7 @@ namespace AvyyanBackend.Controllers
 					}
 					else
 					{
-						// One leftover roll (odd count) → single sticker
+						// One leftover roll (odd count) ? single sticker
 						int rollNo = request.RollNumbers[i];
 
 						string fileContent = singleStickerContent
@@ -2207,3 +2208,4 @@ namespace AvyyanBackend.Controllers
 
 	}
 }
+

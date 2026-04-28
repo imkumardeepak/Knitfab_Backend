@@ -2,11 +2,13 @@ using AvyyanBackend.DTOs.Role;
 using AvyyanBackend.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using AvyyanBackend.Filters;
 
 namespace AvyyanBackend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [RequirePermission("Role Master")]
     [Authorize]
     public class RoleController : ControllerBase
     {

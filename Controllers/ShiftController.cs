@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using AvyyanBackend.Filters;
 using AvyyanBackend.DTOs.Shift;
 using AvyyanBackend.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -7,6 +8,7 @@ namespace AvyyanBackend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [RequirePermission("Shift Master")]
     [Authorize]
     public class ShiftController : ControllerBase
     {

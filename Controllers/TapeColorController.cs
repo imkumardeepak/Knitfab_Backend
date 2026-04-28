@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using AvyyanBackend.Filters;
 using AvyyanBackend.DTOs.TapeColor;
 using AvyyanBackend.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -7,6 +8,7 @@ namespace AvyyanBackend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [RequirePermission("Tape Color")]
     [Authorize]
     public class TapeColorController : ControllerBase
     {

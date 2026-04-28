@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using AvyyanBackend.Filters;
 using Microsoft.AspNetCore.Authorization;
 using AvyyanBackend.DTOs.User;
 using AvyyanBackend.DTOs.Auth;
@@ -9,6 +10,7 @@ namespace AvyyanBackend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [RequirePermission("User Management")]
     [Authorize]
     public class UserController : ControllerBase
     {

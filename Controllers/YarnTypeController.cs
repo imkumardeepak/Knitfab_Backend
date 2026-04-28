@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using AvyyanBackend.Filters;
 using AvyyanBackend.DTOs.YarnType;
 using AvyyanBackend.Interfaces;
 using AvyyanBackend.Models;
@@ -8,6 +9,7 @@ namespace AvyyanBackend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [RequirePermission("Yarn Type")]
     [Authorize] 
     public class YarnTypeController : ControllerBase
     {
