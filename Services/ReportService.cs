@@ -248,6 +248,13 @@ namespace AvyyanBackend.Services
                 var dispatchedRolls = lotScs?.Count(sc => sc.IsDispatched == true) ?? 0;
                 var stockRolls = lotScs?.Count(sc => sc.IsDispatched == false) ?? 0;
                 
+                var inStockRolls = lotRcs?.Where(rc => rc.FgRollNo != null && 
+                    !(lotScs?.FirstOrDefault(sc => sc.FGRollNo == rc.FgRollNo.ToString())?.IsDispatched == true))
+                    .ToList() ?? new List<RollConfirmation>();
+
+                var availableQuantity = inStockRolls.Count;
+                var availableWeight = inStockRolls.Sum(rc => rc.NetWeight ?? 0m);
+
                 var allocatedRolls = pa.MachineAllocations?.Sum(ma => ma.TotalRolls) ?? 0;
                 var requiredRolls = (decimal)allocatedRolls;
 
@@ -266,6 +273,8 @@ namespace AvyyanBackend.Services
                     BalanceNoOfRolls = requiredRolls - updatedNoOfRolls,
                     BalanceQuantity = pa.ActualQuantity - updateQuantity,
                     AllocatedRolls = requiredRolls,
+                    AvailableQuantity = availableQuantity,
+                    AvailableWeight = availableWeight,
                     CreatedDate = pa.CreatedDate
                 };
 

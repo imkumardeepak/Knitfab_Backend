@@ -17,6 +17,8 @@ namespace AvyyanBackend.DTOs.Report
         public decimal BalanceNoOfRolls { get; set; }
         public decimal BalanceQuantity { get; set; }
         public decimal AllocatedRolls { get; set; }
+        public int AvailableQuantity { get; set; }
+        public decimal AvailableWeight { get; set; }
         public DateTime CreatedDate { get; set; }
     }
 }
