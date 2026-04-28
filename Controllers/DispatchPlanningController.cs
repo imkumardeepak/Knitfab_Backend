@@ -211,6 +211,22 @@ namespace AvyyanBackend.Controllers
             return NoContent();
         }
 
+        [HttpDelete("dispatch-order/{dispatchOrderId}")]
+        public async Task<IActionResult> DeleteDispatchOrder(string dispatchOrderId)
+        {
+            var result = await _service.DeleteByDispatchOrderIdAsync(dispatchOrderId);
+            if (!result) return NotFound();
+            return NoContent();
+        }
+
+        [HttpPut("dispatch-order/{dispatchOrderId}/unload")]
+        public async Task<IActionResult> UnloadDispatchOrder(string dispatchOrderId)
+        {
+            var result = await _service.UnloadDispatchOrderAsync(dispatchOrderId);
+            if (!result) return NotFound();
+            return NoContent();
+        }
+
         // NOTE: This endpoint was partially implemented but not completed.
         // The frontend now uses optimized individual endpoints with bulk fetching instead.
         /*

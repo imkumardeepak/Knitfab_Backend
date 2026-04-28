@@ -257,5 +257,46 @@ namespace AvyyanBackend.Repositories
             return true;
         }
 
+        public async Task<bool> DeleteByDispatchOrderIdAsync(string dispatchOrderId)
+        {
+            var dispatchPlannings = await _context.DispatchPlannings
+                .Where(dp => dp.DispatchOrderId == dispatchOrderId)
+                .ToListAsync();
+
+            if (!dispatchPlannings.Any())
+                return false;
+
+            // Delete associated dispatched rolls first to avoid foreign key constraints
+            foreach (var dp in dispatchPlannings)
+            {
+                var rolls = await _context.DispatchedRolls.Where(dr => dr.DispatchPlanningId == dp.Id).ToListAsync();
+                _context.DispatchedRolls.RemoveRange(rolls);
+            }
+
+            _context.DispatchPlannings.RemoveRange(dispatchPlannings);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UnloadDispatchOrderAsync(string dispatchOrderId)
+        {
+            var dispatchPlannings = await _context.DispatchPlannings
+                .Where(dp => dp.DispatchOrderId == dispatchOrderId)
+                .ToListAsync();
+
+            if (!dispatchPlannings.Any())
+                return false;
+
+            // Only change the IsFullyDispatched flag, nothing else
+            foreach (var dp in dispatchPlannings)
+            {
+                dp.IsFullyDispatched = false;
+                dp.UpdatedAt = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
     }
 }

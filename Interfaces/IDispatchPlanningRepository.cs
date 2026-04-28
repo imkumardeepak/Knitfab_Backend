@@ -20,5 +20,7 @@ namespace AvyyanBackend.Interfaces
         Task<string> GenerateLoadingNoAsync();
         Task<string> GenerateDispatchOrderIdAsync();
         Task<bool> DeleteDispatchedRollAsync(int id);
+        Task<bool> DeleteByDispatchOrderIdAsync(string dispatchOrderId);
+        Task<bool> UnloadDispatchOrderAsync(string dispatchOrderId);
     }
 }

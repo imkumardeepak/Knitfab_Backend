@@ -298,5 +298,15 @@ namespace AvyyanBackend.Services
         {
             return await _repository.DeleteDispatchedRollAsync(id);
         }
+
+        public async Task<bool> DeleteByDispatchOrderIdAsync(string dispatchOrderId)
+        {
+            return await _repository.DeleteByDispatchOrderIdAsync(dispatchOrderId);
+        }
+
+        public async Task<bool> UnloadDispatchOrderAsync(string dispatchOrderId)
+        {
+            return await _repository.UnloadDispatchOrderAsync(dispatchOrderId);
+        }
     }
 }
