@@ -50,6 +50,15 @@ namespace AvyyanBackend.Data
 		public DbSet<SalesOrderWeb> SalesOrdersWeb { get; set; }
 		public DbSet<SalesOrderItemWeb> SalesOrderItemsWeb { get; set; }
 
+		// Audit Logging
+		public DbSet<AuditLog> AuditLogs { get; set; }
+
+		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+		{
+			optionsBuilder.ConfigureWarnings(w =>
+				w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+		}
+
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 

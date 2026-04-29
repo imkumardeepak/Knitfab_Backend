@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AvyyanBackend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251223112804_HSNADDED")]
-    partial class HSNADDED
+    [Migration("20260429060906_SyncModelSnapshot")]
+    partial class SyncModelSnapshot
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -636,6 +636,14 @@ namespace AvyyanBackend.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("PolybagColor")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("ProductionStatus")
+                        .HasColumnType("integer");
+
                     b.Property<decimal?>("ReqFinishGsm")
                         .HasPrecision(18, 3)
                         .HasColumnType("decimal(18,2)");
@@ -706,6 +714,11 @@ namespace AvyyanBackend.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("YarnPartyName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
 

@@ -1,0 +1,91 @@
+using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+
+#nullable disable
+
+namespace AvyyanBackend.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddAuditLog : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            // Add ProductionAllotments columns that were pending
+            migrationBuilder.AddColumn<string>(
+                name: "PolybagColor",
+                table: "ProductionAllotments",
+                type: "character varying(100)",
+                maxLength: 100,
+                nullable: false,
+                defaultValue: "");
+
+            migrationBuilder.AddColumn<int>(
+                name: "ProductionStatus",
+                table: "ProductionAllotments",
+                type: "integer",
+                nullable: false,
+                defaultValue: 0);
+
+            migrationBuilder.AddColumn<string>(
+                name: "YarnPartyName",
+                table: "ProductionAllotments",
+                type: "character varying(200)",
+                maxLength: 200,
+                nullable: false,
+                defaultValue: "");
+
+            // Create AuditLogs table
+            migrationBuilder.CreateTable(
+                name: "AuditLogs",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<int>(type: "integer", nullable: true),
+                    UserName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false, defaultValue: "System"),
+                    UserRole = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false, defaultValue: ""),
+                    Action = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Module = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    EntityId = table.Column<int>(type: "integer", nullable: true),
+                    EntityName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    OldValues = table.Column<string>(type: "text", nullable: true),
+                    NewValues = table.Column<string>(type: "text", nullable: true),
+                    ChangeSummary = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    IpAddress = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: true),
+                    IsSystemAction = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AuditLogs", x => x.Id);
+                });
+
+            // Indexes for common query patterns
+            migrationBuilder.CreateIndex(
+                name: "IX_AuditLogs_Timestamp",
+                table: "AuditLogs",
+                column: "Timestamp");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AuditLogs_Module",
+                table: "AuditLogs",
+                column: "Module");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AuditLogs_UserId",
+                table: "AuditLogs",
+                column: "UserId");
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(name: "AuditLogs");
+
+            migrationBuilder.DropColumn(name: "PolybagColor", table: "ProductionAllotments");
+            migrationBuilder.DropColumn(name: "ProductionStatus", table: "ProductionAllotments");
+            migrationBuilder.DropColumn(name: "YarnPartyName", table: "ProductionAllotments");
+        }
+    }
+}

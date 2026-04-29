@@ -21,6 +21,11 @@ namespace AvyyanBackend.Extensions
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
+            // Factory needed by AuditLogService to write on its own fresh context
+            services.AddDbContextFactory<ApplicationDbContext>(options =>
+                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")),
+                ServiceLifetime.Scoped);
+
             return services;
         }
 
@@ -54,6 +59,9 @@ namespace AvyyanBackend.Extensions
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<DataSeedService>();
+
+            // Audit logging
+            services.AddScoped<IAuditLogService, AuditLogService>();
 
             // Dispatch Planning services
             services.AddScoped<DispatchPlanningService>();
