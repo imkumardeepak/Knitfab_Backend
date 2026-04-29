@@ -4,6 +4,7 @@ using AvyyanBackend.DTOs.ProductionConfirmation;
 using AvyyanBackend.Models.ProductionConfirmation;
 using Microsoft.AspNetCore.Mvc;
 using AvyyanBackend.Filters;
+using AvyyanBackend.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace AvyyanBackend.Controllers
@@ -15,12 +16,14 @@ namespace AvyyanBackend.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ILogger<InspectionController> _logger;
         private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
 
-        public InspectionController(ApplicationDbContext context, ILogger<InspectionController> logger, IMapper mapper)
+        public InspectionController(ApplicationDbContext context, ILogger<InspectionController> logger, IMapper mapper, IAuditLogService auditLogService)
         {
             _context = context;
             _logger = logger;
             _mapper = mapper;
+            _auditLogService = auditLogService;
         }
 
         // POST api/inspection
@@ -29,39 +32,28 @@ namespace AvyyanBackend.Controllers
         {
             try
             {
-                // Validate request
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                // Require remarks when rejecting a roll (flag is false)
                 if (!request.Flag && string.IsNullOrWhiteSpace(request.Remarks))
-                {
                     return BadRequest("Remarks are required when rejecting a roll.");
-                }
 
-                // Check if this inspection already exists
                 var existingInspection = await _context.Inspections
-                    .FirstOrDefaultAsync(i => i.AllotId == request.AllotId && 
-                                         i.MachineName == request.MachineName && 
+                    .FirstOrDefaultAsync(i => i.AllotId == request.AllotId &&
+                                         i.MachineName == request.MachineName &&
                                          i.RollNo == request.RollNo);
-                
+
                 if (existingInspection != null)
-                {
                     return Conflict($"Inspection for Allot ID {request.AllotId}, Machine {request.MachineName}, Roll No {request.RollNo} already exists.");
-                }
 
-                // Check if the roll has been confirmed before allowing inspection
                 var rollConfirmation = await _context.RollConfirmations
-                    .FirstOrDefaultAsync(r => r.AllotId == request.AllotId && 
-                                         r.MachineName == request.MachineName && 
+                    .FirstOrDefaultAsync(r => r.AllotId == request.AllotId &&
+                                         r.MachineName == request.MachineName &&
                                          r.RollNo == request.RollNo);
-                
-                if (rollConfirmation == null)
-                {
-                    return BadRequest("Roll must be confirmed before inspection. Please confirm the roll first, then inspect it.");
-                }
 
-                // Create inspection entity
+                if (rollConfirmation == null)
+                    return BadRequest("Roll must be confirmed before inspection. Please confirm the roll first, then inspect it.");
+
                 var inspection = new Inspection
                 {
                     AllotId = request.AllotId,
@@ -88,14 +80,12 @@ namespace AvyyanBackend.Controllers
                     TotalFaults = request.TotalFaults,
                     Remarks = request.Remarks,
                     CreatedDate = request.CreatedDate,
-                    Flag = request.Flag // Add the flag field
+                    Flag = request.Flag
                 };
 
-                // Add to database
                 _context.Inspections.Add(inspection);
                 await _context.SaveChangesAsync();
 
-                // Create response DTO
                 var responseDto = new InspectionResponseDto
                 {
                     Id = inspection.Id,
@@ -123,8 +113,19 @@ namespace AvyyanBackend.Controllers
                     TotalFaults = inspection.TotalFaults,
                     Remarks = inspection.Remarks,
                     CreatedDate = inspection.CreatedDate,
-                    Flag = inspection.Flag // Add the flag field
+                    Flag = inspection.Flag
                 };
+
+                await _auditLogService.LogAsync(
+                    action: inspection.Flag ? "PASS" : "REJECT",
+                    module: "Inspection",
+                    entityId: inspection.Id,
+                    entityName: inspection.AllotId,
+                    changeSummary: inspection.Flag
+                        ? $"Roll #{inspection.RollNo} PASSED inspection in Allot {inspection.AllotId} — Grade: {inspection.Grade}, Faults: {inspection.TotalFaults}"
+                        : $"Roll #{inspection.RollNo} REJECTED in Allot {inspection.AllotId} — Reason: {inspection.Remarks}",
+                    newValues: new { inspection.AllotId, inspection.MachineName, inspection.RollNo, inspection.Grade, inspection.TotalFaults, inspection.Flag, inspection.Remarks }
+                );
 
                 return Ok(responseDto);
             }
@@ -142,11 +143,10 @@ namespace AvyyanBackend.Controllers
             try
             {
                 var inspection = await _context.Inspections.FindAsync(id);
-                
+
                 if (inspection == null)
-                {
                     return NotFound($"Inspection with ID {id} not found.");
-                }
+
                 var responseDto = new InspectionResponseDto
                 {
                     Id = inspection.Id,
@@ -174,7 +174,7 @@ namespace AvyyanBackend.Controllers
                     TotalFaults = inspection.TotalFaults,
                     Remarks = inspection.Remarks,
                     CreatedDate = inspection.CreatedDate,
-                    Flag = inspection.Flag // Add the flag field
+                    Flag = inspection.Flag
                 };
 
                 return Ok(responseDto);
@@ -223,7 +223,7 @@ namespace AvyyanBackend.Controllers
                     TotalFaults = inspection.TotalFaults,
                     Remarks = inspection.Remarks,
                     CreatedDate = inspection.CreatedDate,
-                    Flag = inspection.Flag // Add the flag field
+                    Flag = inspection.Flag
                 }).ToList();
 
                 return Ok(responseDtos);

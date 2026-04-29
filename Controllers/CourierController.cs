@@ -11,16 +11,16 @@ namespace AvyyanBackend.Controllers
     {
         private readonly ICourierService _courierService;
         private readonly ILogger<CourierController> _logger;
+        private readonly IAuditLogService _auditLogService;
 
-        public CourierController(ICourierService courierService, ILogger<CourierController> logger)
+        public CourierController(ICourierService courierService, ILogger<CourierController> logger, IAuditLogService auditLogService)
         {
             _courierService = courierService;
             _logger = logger;
+            _auditLogService = auditLogService;
         }
 
-        /// <summary>
-        /// Get all couriers
-        /// </summary>
+        /// <summary>Get all couriers</summary>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CourierResponseDto>>> GetCouriers()
         {
@@ -36,9 +36,7 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        /// <summary>
-        /// Get courier by ID
-        /// </summary>
+        /// <summary>Get courier by ID</summary>
         [HttpGet("{id}")]
         public async Task<ActionResult<CourierResponseDto>> GetCourier(int id)
         {
@@ -46,9 +44,7 @@ namespace AvyyanBackend.Controllers
             {
                 var courier = await _courierService.GetCourierByIdAsync(id);
                 if (courier == null)
-                {
                     return NotFound($"Courier with ID {id} not found");
-                }
                 return Ok(courier);
             }
             catch (Exception ex)
@@ -58,9 +54,7 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        /// <summary>
-        /// Search couriers by name
-        /// </summary>
+        /// <summary>Search couriers by name</summary>
         [HttpGet("search")]
         public async Task<ActionResult<IEnumerable<CourierResponseDto>>> SearchCouriers(
             [FromQuery] string? courierName,
@@ -68,11 +62,7 @@ namespace AvyyanBackend.Controllers
         {
             try
             {
-                var searchDto = new CourierSearchRequestDto
-                {
-                    CourierName = courierName,
-                    IsActive = isActive
-                };
+                var searchDto = new CourierSearchRequestDto { CourierName = courierName, IsActive = isActive };
                 var couriers = await _courierService.SearchCouriersAsync(searchDto);
                 return Ok(couriers);
             }
@@ -83,21 +73,26 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        /// <summary>
-        /// Create a new courier
-        /// </summary>
+        /// <summary>Create a new courier</summary>
         [HttpPost]
         public async Task<ActionResult<CourierResponseDto>> CreateCourier(CreateCourierRequestDto createCourierDto)
         {
             try
             {
                 var courier = await _courierService.CreateCourierAsync(createCourierDto);
+
+                await _auditLogService.LogAsync(
+                    action: "CREATE",
+                    module: "CourierMaster",
+                    entityId: courier.Id,
+                    entityName: courier.CourierName,
+                    changeSummary: $"Created Courier '{courier.CourierName}'",
+                    newValues: new { courier.CourierName }
+                );
+
                 return CreatedAtAction(nameof(GetCourier), new { id = courier.Id }, courier);
             }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            catch (InvalidOperationException ex) { return BadRequest(ex.Message); }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while creating courier");
@@ -105,9 +100,7 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        /// <summary>
-        /// Update a courier
-        /// </summary>
+        /// <summary>Update a courier</summary>
         [HttpPut("{id}")]
         public async Task<ActionResult<CourierResponseDto>> UpdateCourier(int id, UpdateCourierRequestDto updateCourierDto)
         {
@@ -115,15 +108,20 @@ namespace AvyyanBackend.Controllers
             {
                 var courier = await _courierService.UpdateCourierAsync(id, updateCourierDto);
                 if (courier == null)
-                {
                     return NotFound($"Courier with ID {id} not found");
-                }
+
+                await _auditLogService.LogAsync(
+                    action: "UPDATE",
+                    module: "CourierMaster",
+                    entityId: id,
+                    entityName: courier.CourierName,
+                    changeSummary: $"Updated Courier '{courier.CourierName}'",
+                    newValues: new { courier.CourierName, courier.IsActive }
+                );
+
                 return Ok(courier);
             }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            catch (InvalidOperationException ex) { return BadRequest(ex.Message); }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while updating courier {CourierId}", id);
@@ -131,9 +129,7 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        /// <summary>
-        /// Delete a courier (soft delete)
-        /// </summary>
+        /// <summary>Delete a courier (soft delete)</summary>
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteCourier(int id)
         {
@@ -141,9 +137,15 @@ namespace AvyyanBackend.Controllers
             {
                 var result = await _courierService.DeleteCourierAsync(id);
                 if (!result)
-                {
                     return NotFound($"Courier with ID {id} not found");
-                }
+
+                await _auditLogService.LogAsync(
+                    action: "DELETE",
+                    module: "CourierMaster",
+                    entityId: id,
+                    changeSummary: $"Deleted Courier #{id}"
+                );
+
                 return NoContent();
             }
             catch (Exception ex)

@@ -4,6 +4,7 @@ using AvyyanBackend.DTOs.ProductionConfirmation;
 using AvyyanBackend.Models.ProductionConfirmation;
 using Microsoft.AspNetCore.Mvc;
 using AvyyanBackend.Filters;
+using AvyyanBackend.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Sockets;
 using System.Text;
@@ -17,12 +18,14 @@ namespace AvyyanBackend.Controllers
 		private readonly ApplicationDbContext _context;
 		private readonly ILogger<RollConfirmationController> _logger;
 		private readonly IMapper _mapper;
+		private readonly IAuditLogService _auditLogService;
 
-		public RollConfirmationController(ApplicationDbContext context, ILogger<RollConfirmationController> logger, IMapper mapper)
+		public RollConfirmationController(ApplicationDbContext context, ILogger<RollConfirmationController> logger, IMapper mapper, IAuditLogService auditLogService)
 		{
 			_context = context;
 			_logger = logger;
 			_mapper = mapper;
+			_auditLogService = auditLogService;
 		}
 
 		// POST api/rollconfirmation
@@ -79,7 +82,6 @@ namespace AvyyanBackend.Controllers
 				_context.RollConfirmations.Add(rollConfirmation);
 				await _context.SaveChangesAsync();
 
-				// Create response DTO
 				var responseDto = new RollConfirmationResponseDto
 				{
 					Id = rollConfirmation.Id,
@@ -93,9 +95,18 @@ namespace AvyyanBackend.Controllers
 					Polyester = rollConfirmation.Polyester,
 					Spandex = rollConfirmation.Spandex,
 					RollNo = rollConfirmation.RollNo,
-					FgRollNo = rollConfirmation.FgRollNo, // Include in response
+					FgRollNo = rollConfirmation.FgRollNo,
 					CreatedDate = rollConfirmation.CreatedDate
 				};
+
+				await _auditLogService.LogAsync(
+					action: "CREATE",
+					module: "RollConfirmation",
+					entityId: rollConfirmation.Id,
+					entityName: rollConfirmation.AllotId,
+					changeSummary: $"Created Roll Confirmation for Allot {rollConfirmation.AllotId}, Machine {rollConfirmation.MachineName}, Roll #{rollConfirmation.RollNo}",
+					newValues: new { rollConfirmation.AllotId, rollConfirmation.MachineName, rollConfirmation.RollNo }
+				);
 
 				return Ok(responseDto);
 			}
@@ -323,7 +334,6 @@ namespace AvyyanBackend.Controllers
 
 				await _context.SaveChangesAsync();
 
-				// Create response DTO
 				var responseDto = new RollConfirmationResponseDto
 				{
 					Id = rollConfirmation.Id,
@@ -344,6 +354,17 @@ namespace AvyyanBackend.Controllers
 					IsFGStickerGenerated = rollConfirmation.IsFGStickerGenerated,
 					CreatedDate = rollConfirmation.CreatedDate
 				};
+
+				await _auditLogService.LogAsync(
+					action: rollConfirmation.IsFGStickerGenerated ? "FG_STICKER" : "UPDATE",
+					module: "RollConfirmation",
+					entityId: id,
+					entityName: rollConfirmation.AllotId,
+					changeSummary: rollConfirmation.IsFGStickerGenerated
+						? $"FG Sticker generated for Roll #{rollConfirmation.FgRollNo} in Allot {rollConfirmation.AllotId} — Net Wt: {rollConfirmation.NetWeight} kg"
+						: $"Updated Roll Confirmation #{id} in Allot {rollConfirmation.AllotId}",
+					newValues: new { rollConfirmation.GrossWeight, rollConfirmation.NetWeight, rollConfirmation.FgRollNo, rollConfirmation.IsFGStickerGenerated }
+				);
 
 				return Ok(responseDto);
 			}

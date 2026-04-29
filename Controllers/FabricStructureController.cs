@@ -11,16 +11,16 @@ namespace AvyyanBackend.Controllers
     {
         private readonly IFabricStructureService _fabricStructureService;
         private readonly ILogger<FabricStructureController> _logger;
+        private readonly IAuditLogService _auditLogService;
 
-        public FabricStructureController(IFabricStructureService fabricStructureService, ILogger<FabricStructureController> logger)
+        public FabricStructureController(IFabricStructureService fabricStructureService, ILogger<FabricStructureController> logger, IAuditLogService auditLogService)
         {
             _fabricStructureService = fabricStructureService;
             _logger = logger;
+            _auditLogService = auditLogService;
         }
 
-        /// <summary>
-        /// Get all fabric structures
-        /// </summary>
+        /// <summary>Get all fabric structures</summary>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<FabricStructureResponseDto>>> GetFabricStructures()
         {
@@ -36,9 +36,7 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        /// <summary>
-        /// Get fabric structure by ID
-        /// </summary>
+        /// <summary>Get fabric structure by ID</summary>
         [HttpGet("{id}")]
         public async Task<ActionResult<FabricStructureResponseDto>> GetFabricStructure(int id)
         {
@@ -46,9 +44,7 @@ namespace AvyyanBackend.Controllers
             {
                 var fabricStructure = await _fabricStructureService.GetFabricStructureByIdAsync(id);
                 if (fabricStructure == null)
-                {
                     return NotFound($"Fabric structure with ID {id} not found");
-                }
                 return Ok(fabricStructure);
             }
             catch (Exception ex)
@@ -58,9 +54,7 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        /// <summary>
-        /// Search fabric structures by name
-        /// </summary>
+        /// <summary>Search fabric structures by name</summary>
         [HttpGet("search")]
         public async Task<ActionResult<IEnumerable<FabricStructureResponseDto>>> SearchFabricStructures(
             [FromQuery] string? fabricstr,
@@ -68,11 +62,7 @@ namespace AvyyanBackend.Controllers
         {
             try
             {
-                var searchDto = new FabricStructureSearchRequestDto
-                {
-                    Fabricstr = fabricstr,
-                    IsActive = isActive
-                };
+                var searchDto = new FabricStructureSearchRequestDto { Fabricstr = fabricstr, IsActive = isActive };
                 var fabricStructures = await _fabricStructureService.SearchFabricStructuresAsync(searchDto);
                 return Ok(fabricStructures);
             }
@@ -83,21 +73,26 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        /// <summary>
-        /// Create a new fabric structure
-        /// </summary>
+        /// <summary>Create a new fabric structure</summary>
         [HttpPost]
         public async Task<ActionResult<FabricStructureResponseDto>> CreateFabricStructure(CreateFabricStructureRequestDto createFabricStructureDto)
         {
             try
             {
                 var fabricStructure = await _fabricStructureService.CreateFabricStructureAsync(createFabricStructureDto);
+
+                await _auditLogService.LogAsync(
+                    action: "CREATE",
+                    module: "FabricStructure",
+                    entityId: fabricStructure.Id,
+                    entityName: fabricStructure.Fabricstr,
+                    changeSummary: $"Created Fabric Structure '{fabricStructure.Fabricstr}' — Std Efficiency: {fabricStructure.Standardeffencny}",
+                    newValues: new { fabricStructure.Fabricstr, fabricStructure.Standardeffencny }
+                );
+
                 return CreatedAtAction(nameof(GetFabricStructure), new { id = fabricStructure.Id }, fabricStructure);
             }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            catch (InvalidOperationException ex) { return BadRequest(ex.Message); }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while creating fabric structure");
@@ -105,9 +100,7 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        /// <summary>
-        /// Update a fabric structure
-        /// </summary>
+        /// <summary>Update a fabric structure</summary>
         [HttpPut("{id}")]
         public async Task<ActionResult<FabricStructureResponseDto>> UpdateFabricStructure(int id, UpdateFabricStructureRequestDto updateFabricStructureDto)
         {
@@ -115,15 +108,20 @@ namespace AvyyanBackend.Controllers
             {
                 var fabricStructure = await _fabricStructureService.UpdateFabricStructureAsync(id, updateFabricStructureDto);
                 if (fabricStructure == null)
-                {
                     return NotFound($"Fabric structure with ID {id} not found");
-                }
+
+                await _auditLogService.LogAsync(
+                    action: "UPDATE",
+                    module: "FabricStructure",
+                    entityId: id,
+                    entityName: fabricStructure.Fabricstr,
+                    changeSummary: $"Updated Fabric Structure '{fabricStructure.Fabricstr}' — Std Efficiency: {fabricStructure.Standardeffencny}",
+                    newValues: new { fabricStructure.Fabricstr, fabricStructure.Standardeffencny, fabricStructure.IsActive }
+                );
+
                 return Ok(fabricStructure);
             }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            catch (InvalidOperationException ex) { return BadRequest(ex.Message); }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while updating fabric structure {FabricStructureId}", id);
@@ -131,9 +129,7 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        /// <summary>
-        /// Delete a fabric structure (soft delete)
-        /// </summary>
+        /// <summary>Delete a fabric structure (soft delete)</summary>
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteFabricStructure(int id)
         {
@@ -141,9 +137,15 @@ namespace AvyyanBackend.Controllers
             {
                 var result = await _fabricStructureService.DeleteFabricStructureAsync(id);
                 if (!result)
-                {
                     return NotFound($"Fabric structure with ID {id} not found");
-                }
+
+                await _auditLogService.LogAsync(
+                    action: "DELETE",
+                    module: "FabricStructure",
+                    entityId: id,
+                    changeSummary: $"Deleted Fabric Structure #{id}"
+                );
+
                 return NoContent();
             }
             catch (Exception ex)

@@ -10,21 +10,21 @@ namespace AvyyanBackend.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [RequirePermission("Yarn Type")]
-    [Authorize] 
+    [Authorize]
     public class YarnTypeController : ControllerBase
     {
         private readonly IYarnTypeService _yarnTypeService;
         private readonly ILogger<YarnTypeController> _logger;
+        private readonly IAuditLogService _auditLogService;
 
-        public YarnTypeController(IYarnTypeService yarnTypeService, ILogger<YarnTypeController> logger)
+        public YarnTypeController(IYarnTypeService yarnTypeService, ILogger<YarnTypeController> logger, IAuditLogService auditLogService)
         {
             _yarnTypeService = yarnTypeService;
             _logger = logger;
+            _auditLogService = auditLogService;
         }
 
-        /// <summary>
-        /// Get all yarn types
-        /// </summary>
+        /// <summary>Get all yarn types</summary>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<YarnTypeResponseDto>>> GetAllYarnTypes()
         {
@@ -40,9 +40,7 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        /// <summary>
-        /// Get a specific yarn type by ID
-        /// </summary>
+        /// <summary>Get a specific yarn type by ID</summary>
         [HttpGet("{id}")]
         public async Task<ActionResult<YarnTypeResponseDto>> GetYarnType(int id)
         {
@@ -50,9 +48,7 @@ namespace AvyyanBackend.Controllers
             {
                 var yarnType = await _yarnTypeService.GetYarnTypeByIdAsync(id);
                 if (yarnType == null)
-                {
                     return NotFound($"Yarn type with ID {id} not found");
-                }
                 return Ok(yarnType);
             }
             catch (Exception ex)
@@ -62,21 +58,26 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        /// <summary>
-        /// Create a new yarn type
-        /// </summary>
+        /// <summary>Create a new yarn type</summary>
         [HttpPost]
         public async Task<ActionResult<YarnTypeResponseDto>> CreateYarnType(CreateYarnTypeRequestDto createYarnTypeDto)
         {
             try
             {
                 var yarnType = await _yarnTypeService.CreateYarnTypeAsync(createYarnTypeDto);
+
+                await _auditLogService.LogAsync(
+                    action: "CREATE",
+                    module: "YarnType",
+                    entityId: yarnType.Id,
+                    entityName: yarnType.YarnType,
+                    changeSummary: $"Created Yarn Type '{yarnType.YarnType}'",
+                    newValues: new { yarnType.YarnType }
+                );
+
                 return CreatedAtAction(nameof(GetYarnType), new { id = yarnType.Id }, yarnType);
             }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            catch (InvalidOperationException ex) { return BadRequest(ex.Message); }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating yarn type");
@@ -84,9 +85,7 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        /// <summary>
-        /// Update an existing yarn type
-        /// </summary>
+        /// <summary>Update an existing yarn type</summary>
         [HttpPut("{id}")]
         public async Task<ActionResult<YarnTypeResponseDto>> UpdateYarnType(int id, UpdateYarnTypeRequestDto updateYarnTypeDto)
         {
@@ -94,15 +93,20 @@ namespace AvyyanBackend.Controllers
             {
                 var yarnType = await _yarnTypeService.UpdateYarnTypeAsync(id, updateYarnTypeDto);
                 if (yarnType == null)
-                {
                     return NotFound($"Yarn type with ID {id} not found");
-                }
+
+                await _auditLogService.LogAsync(
+                    action: "UPDATE",
+                    module: "YarnType",
+                    entityId: id,
+                    entityName: yarnType.YarnType,
+                    changeSummary: $"Updated Yarn Type '{yarnType.YarnType}'",
+                    newValues: new { yarnType.YarnType, yarnType.IsActive }
+                );
+
                 return Ok(yarnType);
             }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            catch (InvalidOperationException ex) { return BadRequest(ex.Message); }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating yarn type {YarnTypeId}", id);
@@ -110,9 +114,7 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        /// <summary>
-        /// Delete a yarn type
-        /// </summary>
+        /// <summary>Delete a yarn type</summary>
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteYarnType(int id)
         {
@@ -120,9 +122,15 @@ namespace AvyyanBackend.Controllers
             {
                 var result = await _yarnTypeService.DeleteYarnTypeAsync(id);
                 if (!result)
-                {
                     return NotFound($"Yarn type with ID {id} not found");
-                }
+
+                await _auditLogService.LogAsync(
+                    action: "DELETE",
+                    module: "YarnType",
+                    entityId: id,
+                    changeSummary: $"Deleted Yarn Type #{id}"
+                );
+
                 return NoContent();
             }
             catch (Exception ex)
@@ -132,9 +140,7 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        /// <summary>
-        /// Search yarn types
-        /// </summary>
+        /// <summary>Search yarn types</summary>
         [HttpPost("search")]
         public async Task<ActionResult<IEnumerable<YarnTypeResponseDto>>> SearchYarnTypes(YarnTypeSearchRequestDto searchDto)
         {
@@ -150,9 +156,7 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        /// <summary>
-        /// Check if a yarn type is unique
-        /// </summary>
+        /// <summary>Check if a yarn type is unique</summary>
         [HttpGet("unique")]
         public async Task<ActionResult<bool>> IsYarnTypeUnique([FromQuery] string yarnType, [FromQuery] int? excludeId = null)
         {

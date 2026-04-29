@@ -14,16 +14,16 @@ namespace AvyyanBackend.Controllers
     {
         private readonly IShiftService _shiftService;
         private readonly ILogger<ShiftController> _logger;
+        private readonly IAuditLogService _auditLogService;
 
-        public ShiftController(IShiftService shiftService, ILogger<ShiftController> logger)
+        public ShiftController(IShiftService shiftService, ILogger<ShiftController> logger, IAuditLogService auditLogService)
         {
             _shiftService = shiftService;
             _logger = logger;
+            _auditLogService = auditLogService;
         }
 
-        /// <summary>
-        /// Get all shifts
-        /// </summary>
+        /// <summary>Get all shifts</summary>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ShiftResponseDto>>> GetShifts()
         {
@@ -39,9 +39,7 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        /// <summary>
-        /// Get shift by ID
-        /// </summary>
+        /// <summary>Get shift by ID</summary>
         [HttpGet("{id}")]
         public async Task<ActionResult<ShiftResponseDto>> GetShift(int id)
         {
@@ -49,9 +47,7 @@ namespace AvyyanBackend.Controllers
             {
                 var shift = await _shiftService.GetShiftByIdAsync(id);
                 if (shift == null)
-                {
                     return NotFound($"Shift with ID {id} not found");
-                }
                 return Ok(shift);
             }
             catch (Exception ex)
@@ -61,9 +57,7 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        /// <summary>
-        /// Search shifts by various criteria
-        /// </summary>
+        /// <summary>Search shifts by various criteria</summary>
         [HttpGet("search")]
         public async Task<ActionResult<IEnumerable<ShiftResponseDto>>> SearchShifts(
             [FromQuery] string? shiftName,
@@ -71,11 +65,7 @@ namespace AvyyanBackend.Controllers
         {
             try
             {
-                var searchDto = new ShiftSearchRequestDto
-                {
-                    ShiftName = shiftName,
-                    IsActive = isActive
-                };
+                var searchDto = new ShiftSearchRequestDto { ShiftName = shiftName, IsActive = isActive };
                 var shifts = await _shiftService.SearchShiftsAsync(searchDto);
                 return Ok(shifts);
             }
@@ -86,21 +76,26 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        /// <summary>
-        /// Create a new shift
-        /// </summary>
+        /// <summary>Create a new shift</summary>
         [HttpPost]
         public async Task<ActionResult<ShiftResponseDto>> CreateShift(CreateShiftRequestDto createShiftDto)
         {
             try
             {
                 var shift = await _shiftService.CreateShiftAsync(createShiftDto);
+
+                await _auditLogService.LogAsync(
+                    action: "CREATE",
+                    module: "ShiftMaster",
+                    entityId: shift.Id,
+                    entityName: shift.ShiftName,
+                    changeSummary: $"Created Shift '{shift.ShiftName}'",
+                    newValues: new { shift.ShiftName }
+                );
+
                 return CreatedAtAction(nameof(GetShift), new { id = shift.Id }, shift);
             }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            catch (InvalidOperationException ex) { return BadRequest(ex.Message); }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while creating shift");
@@ -108,9 +103,7 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        /// <summary>
-        /// Update a shift
-        /// </summary>
+        /// <summary>Update a shift</summary>
         [HttpPut("{id}")]
         public async Task<ActionResult<ShiftResponseDto>> UpdateShift(int id, UpdateShiftRequestDto updateShiftDto)
         {
@@ -118,15 +111,20 @@ namespace AvyyanBackend.Controllers
             {
                 var shift = await _shiftService.UpdateShiftAsync(id, updateShiftDto);
                 if (shift == null)
-                {
                     return NotFound($"Shift with ID {id} not found");
-                }
+
+                await _auditLogService.LogAsync(
+                    action: "UPDATE",
+                    module: "ShiftMaster",
+                    entityId: id,
+                    entityName: shift.ShiftName,
+                    changeSummary: $"Updated Shift '{shift.ShiftName}'",
+                    newValues: new { shift.ShiftName, shift.IsActive }
+                );
+
                 return Ok(shift);
             }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            catch (InvalidOperationException ex) { return BadRequest(ex.Message); }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while updating shift {ShiftId}", id);
@@ -134,9 +132,7 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        /// <summary>
-        /// Delete a shift (soft delete)
-        /// </summary>
+        /// <summary>Delete a shift (soft delete)</summary>
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteShift(int id)
         {
@@ -144,9 +140,15 @@ namespace AvyyanBackend.Controllers
             {
                 var result = await _shiftService.DeleteShiftAsync(id);
                 if (!result)
-                {
                     return NotFound($"Shift with ID {id} not found");
-                }
+
+                await _auditLogService.LogAsync(
+                    action: "DELETE",
+                    module: "ShiftMaster",
+                    entityId: id,
+                    changeSummary: $"Deleted Shift #{id}"
+                );
+
                 return NoContent();
             }
             catch (Exception ex)

@@ -17,13 +17,16 @@ namespace AvyyanBackend.Controllers
 	public class SalesOrderWebController : ControllerBase
 	{
 		private readonly ISalesOrderWebService _salesOrderWebService;
+		private readonly IAuditLogService _auditLogService;
 		private readonly ILogger<SalesOrderWebController> _logger;
 
 		public SalesOrderWebController(
 			ISalesOrderWebService salesOrderWebService,
+			IAuditLogService auditLogService,
 			ILogger<SalesOrderWebController> logger)
 		{
 			_salesOrderWebService = salesOrderWebService ?? throw new ArgumentNullException(nameof(salesOrderWebService));
+			_auditLogService = auditLogService ?? throw new ArgumentNullException(nameof(auditLogService));
 			_logger = logger ?? throw new ArgumentNullException(nameof(logger));
 		}
 
@@ -307,6 +310,15 @@ namespace AvyyanBackend.Controllers
 				_logger.LogInformation("Successfully created sales order web with ID: {SalesOrderWebId}",
 					salesOrderWeb.Id);
 
+				await _auditLogService.LogAsync(
+					action: "CREATE",
+					module: "SalesOrder",
+					entityId: salesOrderWeb.Id,
+					entityName: salesOrderWeb.VoucherNumber,
+					changeSummary: $"Created Sales Order {salesOrderWeb.VoucherNumber} for {salesOrderWeb.BuyerName} — Qty: {salesOrderWeb.TotalQuantity} kg, Amount: ₹{salesOrderWeb.TotalAmount}",
+					newValues: new { salesOrderWeb.VoucherNumber, salesOrderWeb.BuyerName, salesOrderWeb.TotalQuantity, salesOrderWeb.TotalAmount, salesOrderWeb.IsJobWork }
+				);
+
 				return CreatedAtAction(
 					nameof(GetSalesOrderWeb),
 					new { id = salesOrderWeb.Id },
@@ -358,6 +370,14 @@ namespace AvyyanBackend.Controllers
 
 				_logger.LogInformation("Updating sales order web with ID: {SalesOrderWebId}", id);
 
+				// Capture old state before update
+				var oldRecord = await _salesOrderWebService.GetByIdAsync(id);
+				var oldSnapshot = oldRecord == null ? null : new
+				{
+					oldRecord.BuyerName, oldRecord.TotalQuantity, oldRecord.TotalAmount,
+					oldRecord.IsProcess, oldRecord.Remarks
+				};
+
 				var salesOrderWeb = await _salesOrderWebService.UpdateAsync(id, updateSalesOrderWebDto);
 
 				if (salesOrderWeb == null)
@@ -365,6 +385,16 @@ namespace AvyyanBackend.Controllers
 					_logger.LogWarning("Sales order web with ID {SalesOrderWebId} not found for update", id);
 					return NotFound(new { message = $"Sales order web with ID {id} not found" });
 				}
+
+				await _auditLogService.LogAsync(
+					action: "UPDATE",
+					module: "SalesOrder",
+					entityId: id,
+					entityName: salesOrderWeb.VoucherNumber,
+					changeSummary: $"Updated Sales Order {salesOrderWeb.VoucherNumber} — Qty: {oldRecord?.TotalQuantity} → {salesOrderWeb.TotalQuantity}, Amount: ₹{oldRecord?.TotalAmount} → ₹{salesOrderWeb.TotalAmount}",
+					oldValues: oldSnapshot,
+					newValues: new { salesOrderWeb.BuyerName, salesOrderWeb.TotalQuantity, salesOrderWeb.TotalAmount, salesOrderWeb.IsProcess, salesOrderWeb.Remarks }
+				);
 
 				_logger.LogInformation("Successfully updated sales order web with ID: {SalesOrderWebId}", id);
 				return Ok(new
@@ -420,6 +450,14 @@ namespace AvyyanBackend.Controllers
 						message = $"Sales order web item with ID {salesOrderItemWebId} not found in sales order web {salesOrderWebId}"
 					});
 				}
+
+				await _auditLogService.LogAsync(
+					action: "PROCESS",
+					module: "SalesOrder",
+					entityId: salesOrderWebId,
+					entityName: result.VoucherNumber,
+					changeSummary: $"Marked Sales Order Item #{salesOrderItemWebId} as Processed on Order {result.VoucherNumber}"
+				);
 
 				_logger.LogInformation("Successfully marked sales order web item {SalesOrderItemWebId} as processed",
 					salesOrderItemWebId);
@@ -555,6 +593,13 @@ namespace AvyyanBackend.Controllers
 			{
 				_logger.LogInformation("Deleting sales order web with ID: {SalesOrderWebId}", id);
 
+				// Capture before delete
+				var toDelete = await _salesOrderWebService.GetByIdAsync(id);
+				var deleteSnapshot = toDelete == null ? null : new
+				{
+					toDelete.VoucherNumber, toDelete.BuyerName, toDelete.TotalQuantity, toDelete.TotalAmount
+				};
+
 				var result = await _salesOrderWebService.DeleteAsync(id);
 
 				if (!result)
@@ -562,6 +607,15 @@ namespace AvyyanBackend.Controllers
 					_logger.LogWarning("Sales order web with ID {SalesOrderWebId} not found for deletion", id);
 					return NotFound(new { message = $"Sales order web with ID {id} not found" });
 				}
+
+				await _auditLogService.LogAsync(
+					action: "DELETE",
+					module: "SalesOrder",
+					entityId: id,
+					entityName: toDelete?.VoucherNumber,
+					changeSummary: $"Deleted Sales Order {toDelete?.VoucherNumber} for {toDelete?.BuyerName}",
+					oldValues: deleteSnapshot
+				);
 
 				_logger.LogInformation("Successfully deleted sales order web with ID: {SalesOrderWebId}", id);
 				return NoContent();

@@ -17,12 +17,14 @@ namespace AvyyanBackend.Controllers
 		private readonly IStorageCaptureService _storageCaptureService;
 		private readonly ILogger<StorageCaptureController> _logger;
 		private readonly ApplicationDbContext _context;
+		private readonly IAuditLogService _auditLogService;
 
-		public StorageCaptureController(IStorageCaptureService storageCaptureService, ILogger<StorageCaptureController> logger, ApplicationDbContext context)
+		public StorageCaptureController(IStorageCaptureService storageCaptureService, ILogger<StorageCaptureController> logger, ApplicationDbContext context, IAuditLogService auditLogService)
 		{
 			_storageCaptureService = storageCaptureService;
 			_logger = logger;
 			_context = context;
+			_auditLogService = auditLogService;
 		}
 
 		/// <summary>
@@ -134,6 +136,16 @@ namespace AvyyanBackend.Controllers
 
 
 				var storageCapture = await _storageCaptureService.CreateStorageCaptureAsync(createStorageCaptureDto);
+
+				await _auditLogService.LogAsync(
+					action: "CREATE",
+					module: "StorageCapture",
+					entityId: storageCapture.Id,
+					entityName: storageCapture.FGRollNo,
+					changeSummary: $"Roll {storageCapture.FGRollNo} captured to location {storageCapture.LocationCode} (Lot: {storageCapture.LotNo})",
+					newValues: new { storageCapture.LotNo, storageCapture.FGRollNo, storageCapture.LocationCode, storageCapture.CustomerName }
+				);
+
 				return CreatedAtAction(nameof(GetStorageCaptures), new { id = storageCapture.Id }, storageCapture);
 			}
 			catch (Exception ex)
@@ -291,6 +303,16 @@ namespace AvyyanBackend.Controllers
 				{
 					return NotFound($"Storage capture with ID {id} not found");
 				}
+
+				await _auditLogService.LogAsync(
+					action: "UPDATE",
+					module: "StorageCapture",
+					entityId: id,
+					entityName: storageCapture.FGRollNo,
+					changeSummary: $"Updated Storage Capture for Roll {storageCapture.FGRollNo} in Lot {storageCapture.LotNo}",
+					newValues: new { storageCapture.LocationCode, storageCapture.IsDispatched }
+				);
+
 				return Ok(storageCapture);
 			}
 			catch (Exception ex)
@@ -313,6 +335,14 @@ namespace AvyyanBackend.Controllers
 				{
 					return NotFound($"Storage capture with ID {id} not found");
 				}
+
+				await _auditLogService.LogAsync(
+					action: "DELETE",
+					module: "StorageCapture",
+					entityId: id,
+					changeSummary: $"Deleted Storage Capture record #{id}"
+				);
+
 				return NoContent();
 			}
 			catch (Exception ex)

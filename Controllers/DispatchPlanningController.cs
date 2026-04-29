@@ -2,6 +2,7 @@ using AvyyanBackend.DTOs.DispatchPlanning;
 using AvyyanBackend.Services;
 using Microsoft.AspNetCore.Mvc;
 using AvyyanBackend.Filters;
+using AvyyanBackend.Interfaces;
 using Npgsql;
 
 namespace AvyyanBackend.Controllers
@@ -11,10 +12,12 @@ namespace AvyyanBackend.Controllers
     public class DispatchPlanningController : ControllerBase
     {
         private readonly DispatchPlanningService _service;
+        private readonly IAuditLogService _auditLogService;
 
-        public DispatchPlanningController(DispatchPlanningService service)
+        public DispatchPlanningController(DispatchPlanningService service, IAuditLogService auditLogService)
         {
             _service = service;
+            _auditLogService = auditLogService;
         }
 
         [HttpGet]
@@ -49,7 +52,7 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        // GET api/DispatchPlanning/fully-dispatched-orders - Get unique fully dispatched dispatch order IDs with details
+        // GET api/DispatchPlanning/fully-dispatched-orders
         [HttpGet("fully-dispatched-orders")]
         public async Task<ActionResult<IEnumerable<object>>> GetFullyDispatchedOrders()
         {
@@ -70,6 +73,16 @@ namespace AvyyanBackend.Controllers
             try
             {
                 var dispatchPlanning = await _service.CreateAsync(createDto);
+
+                await _auditLogService.LogAsync(
+                    action: "CREATE",
+                    module: "Dispatch",
+                    entityId: dispatchPlanning.Id,
+                    entityName: dispatchPlanning.DispatchOrderId,
+                    changeSummary: $"Created Dispatch Order {dispatchPlanning.DispatchOrderId} — Lot: {dispatchPlanning.LotNo}, Customer: {dispatchPlanning.CustomerName}",
+                    newValues: new { dispatchPlanning.DispatchOrderId, dispatchPlanning.LotNo, dispatchPlanning.CustomerName, dispatchPlanning.VehicleNo }
+                );
+
                 return CreatedAtAction(nameof(GetById), new { id = dispatchPlanning.Id }, dispatchPlanning);
             }
             catch (Exception ex)
@@ -83,7 +96,19 @@ namespace AvyyanBackend.Controllers
         {
             try
             {
+                var old = await _service.GetByIdAsync(id);
                 var dispatchPlanning = await _service.UpdateAsync(id, updateDto);
+
+                await _auditLogService.LogAsync(
+                    action: "UPDATE",
+                    module: "Dispatch",
+                    entityId: id,
+                    entityName: dispatchPlanning.DispatchOrderId,
+                    changeSummary: $"Updated Dispatch Order {dispatchPlanning.DispatchOrderId}",
+                    oldValues: old == null ? null : new { old.VehicleNo, old.IsFullyDispatched, old.CustomerName },
+                    newValues: new { dispatchPlanning.VehicleNo, dispatchPlanning.IsFullyDispatched, dispatchPlanning.CustomerName }
+                );
+
                 return Ok(dispatchPlanning);
             }
             catch (Exception ex)
@@ -95,9 +120,19 @@ namespace AvyyanBackend.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
+            var existing = await _service.GetByIdAsync(id);
             var result = await _service.DeleteAsync(id);
             if (!result)
                 return NotFound();
+
+            await _auditLogService.LogAsync(
+                action: "DELETE",
+                module: "Dispatch",
+                entityId: id,
+                entityName: existing?.DispatchOrderId,
+                changeSummary: $"Deleted Dispatch Planning record #{id} from Order {existing?.DispatchOrderId}",
+                oldValues: existing == null ? null : new { existing.DispatchOrderId, existing.LotNo, existing.CustomerName, existing.VehicleNo }
+            );
 
             return NoContent();
         }
@@ -115,6 +150,14 @@ namespace AvyyanBackend.Controllers
             try
             {
                 var dispatchedRoll = await _service.CreateDispatchedRollAsync(dto);
+
+                await _auditLogService.LogAsync(
+                    action: "LOAD",
+                    module: "Dispatch",
+                    entityName: dto.LotNo,
+                    changeSummary: $"Loaded Roll {dto.FGRollNo} / Lot {dto.LotNo} into Dispatch Plan #{dto.DispatchPlanningId}"
+                );
+
                 return CreatedAtAction(nameof(GetDispatchedRolls), new { id = dispatchedRoll.Id }, dispatchedRoll);
             }
             catch (ArgumentException ex)
@@ -131,18 +174,26 @@ namespace AvyyanBackend.Controllers
             }
             catch (Exception ex)
             {
-                // Log the general exception for debugging purposes
                 Console.WriteLine($"Error creating dispatched roll: {ex.Message}");
                 return StatusCode(500, new { message = "An error occurred while creating the dispatched roll." });
             }
         }
-        
+
         [HttpPost("dispatched-rolls/bulk")]
         public async Task<ActionResult<IEnumerable<DispatchedRollDto>>> CreateDispatchedRollsBulk([FromBody] IEnumerable<DispatchedRollDto> dtos)
         {
             try
             {
                 var dispatchedRolls = await _service.CreateDispatchedRollsBulkAsync(dtos);
+                var dtoList = dtos.ToList();
+
+                await _auditLogService.LogAsync(
+                    action: "LOAD",
+                    module: "Dispatch",
+                    entityName: dtoList.FirstOrDefault()?.LotNo,
+                    changeSummary: $"Bulk loaded {dtoList.Count} rolls into Dispatch Plan #{dtoList.FirstOrDefault()?.DispatchPlanningId}"
+                );
+
                 return Ok(dispatchedRolls);
             }
             catch (InvalidOperationException ex) when (ex.Message.Contains("already exists"))
@@ -154,8 +205,8 @@ namespace AvyyanBackend.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-        
-        // New endpoint to update dispatch status based on roll counts
+
+        // Update dispatch status based on roll counts
         [HttpPut("{id}/status")]
         public async Task<ActionResult<DispatchPlanningDto>> UpdateDispatchStatus(int id, [FromBody] decimal totalDispatchedRolls)
         {
@@ -170,7 +221,7 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        // New endpoint to create multiple dispatch planning records with the same dispatch order ID
+        // Create multiple dispatch planning records with the same dispatch order ID
         [HttpPost("batch")]
         public async Task<ActionResult<IEnumerable<DispatchPlanningDto>>> CreateBatch(
       [FromBody] IEnumerable<CreateDispatchPlanningRequestDto> createDtos)
@@ -178,6 +229,15 @@ namespace AvyyanBackend.Controllers
             try
             {
                 var results = await _service.CreateBatchAsync(createDtos);
+
+                var dtoList = createDtos.ToList();
+                await _auditLogService.LogAsync(
+                    action: "CREATE",
+                    module: "Dispatch",
+                    entityName: dtoList.FirstOrDefault()?.LotNo,
+                    changeSummary: $"Created batch of {dtoList.Count} Dispatch Planning entries for Lot {dtoList.FirstOrDefault()?.LotNo} / Customer {dtoList.FirstOrDefault()?.CustomerName}"
+                );
+
                 return Ok(results);
             }
             catch (Exception ex)
@@ -186,7 +246,7 @@ namespace AvyyanBackend.Controllers
             }
         }
 
-        // New endpoint to get dispatched rolls ordered by lotNo and fgRoll sequence
+        // Get dispatched rolls ordered by lotNo and fgRoll sequence
         [HttpGet("ordered-dispatched-rolls/{dispatchOrderId}")]
         public async Task<ActionResult<IEnumerable<DispatchedRollDto>>> GetOrderedDispatchedRolls(string dispatchOrderId)
         {
@@ -200,13 +260,21 @@ namespace AvyyanBackend.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-        
-        // New endpoint to delete a specific dispatched roll
+
+        // Delete a specific dispatched roll
         [HttpDelete("dispatched-rolls/{id}")]
         public async Task<IActionResult> DeleteDispatchedRoll(int id)
-        {            var result = await _service.DeleteDispatchedRollAsync(id);
+        {
+            var result = await _service.DeleteDispatchedRollAsync(id);
             if (!result)
                 return NotFound();
+
+            await _auditLogService.LogAsync(
+                action: "UNLOAD",
+                module: "Dispatch",
+                entityId: id,
+                changeSummary: $"Removed Dispatched Roll #{id} from dispatch"
+            );
 
             return NoContent();
         }
@@ -216,6 +284,14 @@ namespace AvyyanBackend.Controllers
         {
             var result = await _service.DeleteByDispatchOrderIdAsync(dispatchOrderId);
             if (!result) return NotFound();
+
+            await _auditLogService.LogAsync(
+                action: "CANCEL",
+                module: "Dispatch",
+                entityName: dispatchOrderId,
+                changeSummary: $"Cancelled and deleted entire Dispatch Order {dispatchOrderId}"
+            );
+
             return NoContent();
         }
 
@@ -224,29 +300,15 @@ namespace AvyyanBackend.Controllers
         {
             var result = await _service.UnloadDispatchOrderAsync(dispatchOrderId);
             if (!result) return NotFound();
+
+            await _auditLogService.LogAsync(
+                action: "UNLOAD",
+                module: "Dispatch",
+                entityName: dispatchOrderId,
+                changeSummary: $"Unloaded all rolls from Dispatch Order {dispatchOrderId}"
+            );
+
             return NoContent();
         }
-
-        // NOTE: This endpoint was partially implemented but not completed.
-        // The frontend now uses optimized individual endpoints with bulk fetching instead.
-        /*
-        /// <summary>
-        /// Get complete dispatch planning summary for selected voucher numbers
-        /// This endpoint aggregates all data needed for dispatch planning in one call
-        /// </summary>
-        [HttpPost("summary")]
-        public async Task<ActionResult> GetDispatchPlanningSummary([FromBody] DispatchPlanningSummaryRequestDto request)
-        {
-            try
-            {
-                var summary = await _service.GetDispatchPlanningSummaryAsync(request.VoucherNumbers);
-                return Ok(summary);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-        */
     }
 }
