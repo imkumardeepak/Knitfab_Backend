@@ -9,5 +9,6 @@ namespace AvyyanBackend.Interfaces
         Task<List<FinalFabricReportDto>> GetFinalFabricReportAsync();
         Task<List<FabricStockReportDto>> GetFabricStockReportAsync();
         Task<FinalFabricReportDto> GetFinalFabricReportBySalesOrderAsync(int salesOrderId);
+        Task<List<DispatchReportDto>> GetDispatchReportAsync();
     }
 }

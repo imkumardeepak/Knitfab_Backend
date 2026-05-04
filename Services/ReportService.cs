@@ -290,5 +290,25 @@ namespace AvyyanBackend.Services
             var reports = await GetFinalFabricReportAsync();
             return reports.FirstOrDefault(r => r.SalesOrderId == salesOrderId);
         }
+
+        public async Task<List<DispatchReportDto>> GetDispatchReportAsync()
+        {
+            var query = from dp in _context.DispatchPlannings
+                        join so in _context.SalesOrdersWeb on dp.SalesOrderId equals so.Id into soGroup
+                        from so in soGroup.DefaultIfEmpty()
+                        select new DispatchReportDto
+                        {
+                            LoadingSheetNo = dp.LoadingNo,
+                            DispatchOrderId = dp.DispatchOrderId,
+                            Voucher = so != null ? so.VoucherNumber : string.Empty,
+                            Customer = dp.CustomerName,
+                            Lots = dp.LotNo,
+                            DispatchDate = dp.DispatchEndDate ?? dp.CreatedAt,
+                            GrossWeight = dp.TotalGrossWeight,
+                            NetWeight = dp.TotalNetWeight
+                        };
+
+            return await query.OrderByDescending(x => x.DispatchDate).ToListAsync();
+        }
     }
 }

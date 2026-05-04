@@ -41,5 +41,12 @@ namespace AvyyanBackend.Controllers
             }
             return Ok(report);
         }
+
+        [HttpGet("dispatch-report")]
+        public async Task<ActionResult<List<DispatchReportDto>>> GetDispatchReport()
+        {
+            var report = await _reportService.GetDispatchReportAsync();
+            return Ok(report);
+        }
     }
 }
