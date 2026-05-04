@@ -29,6 +29,7 @@ builder.Services.AddValidationServices();
 builder.Services.AddAutoMapperServices();
 builder.Services.AddCorsServices();
 builder.Services.AddSignalR();
+builder.Services.AddHostedService<DatabaseBackupService>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
