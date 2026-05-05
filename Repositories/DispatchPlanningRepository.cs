@@ -176,36 +176,33 @@ namespace AvyyanBackend.Repositories
             // Format: LOAD{YY}{MM}{SERIAL}
             // YY = 2-digit year
             // MM = 2-digit month
-            // SERIAL = 4-digit serial number
+            // SERIAL = 4-digit serial number, resets each month
 
-            // Get the latest record based on the highest loading number
+            var now = DateTime.UtcNow;
+            var currentYear = now.ToString("yy");
+            var currentMonth = now.ToString("MM");
+            var currentPrefix = $"LOAD{currentYear}{currentMonth}";
+
+            // Filter only records from the CURRENT month/year
             var lastRecord = await _context.DispatchPlannings
-                .Where(dp => dp.LoadingNo.StartsWith("LOAD"))
+                .Where(dp => dp.LoadingNo.StartsWith(currentPrefix))
                 .OrderByDescending(dp => dp.LoadingNo)
                 .FirstOrDefaultAsync();
 
-            if (lastRecord != null && !string.IsNullOrEmpty(lastRecord.LoadingNo) && lastRecord.LoadingNo.Length >= 10)
+            if (lastRecord != null && !string.IsNullOrEmpty(lastRecord.LoadingNo) && lastRecord.LoadingNo.Length >= 12)
             {
-                // Extract the year, month, and serial from the last record
-                var lastYear = lastRecord.LoadingNo.Substring(4, 2);  // Position 4-5
-                var lastMonth = lastRecord.LoadingNo.Substring(6, 2); // Position 6-7
                 var lastSerialStr = lastRecord.LoadingNo.Substring(8, 4); // Position 8-11
 
                 if (int.TryParse(lastSerialStr, out int lastSerial))
                 {
-                    // Increment the serial number
                     int nextSerial = lastSerial + 1;
-                    var prefix = $"LOAD{lastYear}{lastMonth}";
-                    return $"{prefix}{nextSerial:D4}"; // Format as 4-digit number with leading zeros
+                    // Reset to 0001 if exceeds 9999
+                    if (nextSerial > 9999) nextSerial = 1;
+                    return $"{currentPrefix}{nextSerial:D4}";
                 }
             }
 
-            // If no records exist or parsing failed, start with the current date
-            var now = DateTime.UtcNow;
-            var currentYear = now.ToString("yy");
-            var currentMonth = now.ToString("MM");
-            var newPrefix = $"LOAD{currentYear}{currentMonth}";
-            return $"{newPrefix}0001"; // Start with 0001
+            return $"{currentPrefix}0001";
         }
 
 
@@ -214,36 +211,33 @@ namespace AvyyanBackend.Repositories
             // Format: DO{YY}{MM}{SERIAL}
             // YY = 2-digit year
             // MM = 2-digit month
-            // SERIAL = 3-digit serial number
+            // SERIAL = 3-digit serial number, resets each month
 
-            // Get the latest record based on the highest dispatch order ID
+            var now = DateTime.UtcNow;
+            var currentYear = now.ToString("yy");
+            var currentMonth = now.ToString("MM");
+            var currentPrefix = $"DO{currentYear}{currentMonth}";
+
+            // Filter only records from the CURRENT month/year
             var lastRecord = await _context.DispatchPlannings
-                .Where(dp => dp.DispatchOrderId.StartsWith("DO"))
+                .Where(dp => dp.DispatchOrderId.StartsWith(currentPrefix))
                 .OrderByDescending(dp => dp.DispatchOrderId)
                 .FirstOrDefaultAsync();
 
-            if (lastRecord != null && !string.IsNullOrEmpty(lastRecord.DispatchOrderId) && lastRecord.DispatchOrderId.Length >= 6)
+            if (lastRecord != null && !string.IsNullOrEmpty(lastRecord.DispatchOrderId) && lastRecord.DispatchOrderId.Length >= 9)
             {
-                // Extract the year, month, and serial from the last record
-                var lastYear = lastRecord.DispatchOrderId.Substring(2, 2);  // Position 2-3
-                var lastMonth = lastRecord.DispatchOrderId.Substring(4, 2); // Position 4-5
                 var lastSerialStr = lastRecord.DispatchOrderId.Substring(6, 3); // Position 6-8
 
                 if (int.TryParse(lastSerialStr, out int lastSerial))
                 {
-                    // Increment the serial number
                     int nextSerial = lastSerial + 1;
-                    var prefix = $"DO{lastYear}{lastMonth}";
-                    return $"{prefix}{nextSerial:D3}"; // Format as 3-digit number with leading zeros
+                    // Reset to 001 if exceeds 999
+                    if (nextSerial > 999) nextSerial = 1;
+                    return $"{currentPrefix}{nextSerial:D3}";
                 }
             }
 
-            // If no records exist or parsing failed, start with the current date
-            var now = DateTime.UtcNow;
-            var currentYear = now.ToString("yy");
-            var currentMonth = now.ToString("MM");
-            var newPrefix = $"DO{currentYear}{currentMonth}";
-            return $"{newPrefix}001"; // Start with 001
+            return $"{currentPrefix}001";
         }
 
         public async Task<bool> DeleteDispatchedRollAsync(int id)
