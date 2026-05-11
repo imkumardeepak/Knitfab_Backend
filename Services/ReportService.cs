@@ -291,9 +291,23 @@ namespace AvyyanBackend.Services
             return reports.FirstOrDefault(r => r.SalesOrderId == salesOrderId);
         }
 
-        public async Task<List<DispatchReportDto>> GetDispatchReportAsync()
+        public async Task<List<DispatchReportDto>> GetDispatchReportAsync(DateTime? startDate = null, DateTime? endDate = null)
         {
-            var query = from dp in _context.DispatchPlannings
+            var dispatchQuery = _context.DispatchPlannings.AsQueryable();
+
+            if (startDate.HasValue)
+            {
+                var start = startDate.Value.ToUniversalTime();
+                dispatchQuery = dispatchQuery.Where(dp => (dp.DispatchEndDate ?? dp.CreatedAt) >= start);
+            }
+
+            if (endDate.HasValue)
+            {
+                var end = endDate.Value.Date.AddDays(1).ToUniversalTime();
+                dispatchQuery = dispatchQuery.Where(dp => (dp.DispatchEndDate ?? dp.CreatedAt) < end);
+            }
+
+            var query = from dp in dispatchQuery
                         join so in _context.SalesOrdersWeb on dp.SalesOrderId equals so.Id into soGroup
                         from so in soGroup.DefaultIfEmpty()
                         select new DispatchReportDto

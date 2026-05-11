@@ -43,9 +43,9 @@ namespace AvyyanBackend.Controllers
         }
 
         [HttpGet("dispatch-report")]
-        public async Task<ActionResult<List<DispatchReportDto>>> GetDispatchReport()
+        public async Task<ActionResult<List<DispatchReportDto>>> GetDispatchReport([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
         {
-            var report = await _reportService.GetDispatchReportAsync();
+            var report = await _reportService.GetDispatchReportAsync(startDate, endDate);
             return Ok(report);
         }
     }
