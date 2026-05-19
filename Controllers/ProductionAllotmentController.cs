@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AutoMapper;
 using AvyyanBackend.Data;
 using AvyyanBackend.DTOs.ProAllotDto;
 using AvyyanBackend.Models.ProAllot;
@@ -533,29 +533,16 @@ namespace AvyyanBackend.Controllers
 				string fileContent = System.IO.File.ReadAllText(filepath);
 
 				// Get company name from SalesOrderWeb
-				string companyName = "AVYAAN KNITFAB"; // Default company name
+				string companyName = "AVYAAN KNITFAB"; // Default to uppercase company name
 				
 				// Try to get SalesOrderWeb to fetch company name
 				var salesOrderWeb = _context.SalesOrdersWeb
 					.FirstOrDefault(sow => sow.Id == productionAllotment.SalesOrderId);
 				
-				// Use company name from SalesOrderWeb if available and matches "Avyaan Knitfab" (case insensitive)
+				// Use company name from SalesOrderWeb if available
 				if (salesOrderWeb != null && !string.IsNullOrWhiteSpace(salesOrderWeb.CompanyName))
 				{
-					// Check if company name contains "Avyaan Knitfab" (case insensitive)
-					if (salesOrderWeb.CompanyName.IndexOf("Avyaan Knitfab", StringComparison.OrdinalIgnoreCase) >= 0)
-					{
-						companyName = "AVYAAN KNITFAB"; // Print in uppercase
-					}
-					else
-					{
-						companyName = ""; // Don't print any company name
-					}
-				}
-				else
-				{
-					// If no company name found, don't print any company name
-					companyName = "";
+					companyName = salesOrderWeb.CompanyName.ToUpper(); // Print in uppercase
 				}
 
 				// Prepare customer name (split at word boundaries for the two customer fields)
@@ -707,31 +694,16 @@ namespace AvyyanBackend.Controllers
 						string fileContent = System.IO.File.ReadAllText(filepath);
 
 						// Get company name from SalesOrderWeb
-						string companyName = "AVYAAN KNITFAB"; // Default company name
+						string companyName = "AVYAAN KNITFAB"; // Default to uppercase company name
 						
 						// Try to get SalesOrderWeb to fetch company name
 						var salesOrderWeb = _context.SalesOrdersWeb
 							.FirstOrDefault(sow => sow.Id == productionAllotment.SalesOrderId);
 						
-
-						
-						// Use company name from SalesOrderWeb if available and matches "Avyaan Knitfab" (case insensitive)
+						// Use company name from SalesOrderWeb if available
 						if (salesOrderWeb != null && !string.IsNullOrWhiteSpace(salesOrderWeb.CompanyName))
 						{
-							// Check if company name contains "Avyaan Knitfab" (case insensitive)
-							if (salesOrderWeb.CompanyName.IndexOf("Avyaan Knitfab", StringComparison.OrdinalIgnoreCase) >= 0)
-							{
-								companyName = "AVYAAN KNITFAB"; // Print in uppercase
-							}
-							else
-							{
-								companyName = ""; // Don't print any company name
-							}
-						}
-						else
-						{
-							// If no company name found, don't print any company name
-							companyName = "";
+							companyName = salesOrderWeb.CompanyName.ToUpper(); // Print in uppercase
 						}
 
 						// Prepare customer name (split at word boundaries for the two customer fields)
@@ -2208,4 +2180,5 @@ namespace AvyyanBackend.Controllers
 
 	}
 }
+
 
