@@ -1,4 +1,4 @@
-﻿﻿using AvyyanBackend.Models.ProAllot;
+﻿using AvyyanBackend.Models.ProAllot;
 using System.ComponentModel.DataAnnotations;
 
 namespace AvyyanBackend.DTOs.ProAllotDto
@@ -148,5 +148,8 @@ namespace AvyyanBackend.DTOs.ProAllotDto
 		public decimal TotalRolls { get; set; }
 		public RollBreakdown RollBreakdown { get; set; }
 		public decimal EstimatedProductionTime { get; set; }
+		public decimal? ConfirmedWeight { get; set; }
+		public int? ConfirmedRolls { get; set; }
+		public int? FgStickers { get; set; }
 	}
 }
