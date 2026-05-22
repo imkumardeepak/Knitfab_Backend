@@ -79,7 +79,6 @@
 ^A0N,51,69^FD<FGROLLNO>^FS
 
 ^FT10,729
-^FB780,1,0,C,0
 ^A0N,28,38^FD<COMP>^FS
 
 
@@ -125,7 +124,7 @@
 ^A0N,42,28^FD<CUSTOMER2>^FS
 
 
-##### SLIT ï¿½ FABRIC TYPE ï¿½ TAPE #####
+##### SLIT • FABRIC TYPE • TAPE #####
 
 ^FT6,505
 ^A0N,28,38^FDSlit Line:^FS

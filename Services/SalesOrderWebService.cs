@@ -164,6 +164,47 @@ namespace AvyyanBackend.Services
 
             _logger.LogInformation("Updated sales order web {SalesOrderWebId}", id);
 
+            // Propagate updates to associated ProductionAllotments (Lots)
+            try
+            {
+                var associatedLots = await _context.ProductionAllotments
+                    .Where(pa => pa.SalesOrderId == id)
+                    .ToListAsync();
+
+                if (associatedLots.Any())
+                {
+                    _logger.LogInformation("Propagating updates from Sales Order {SalesOrderWebId} to {LotCount} lots", id, associatedLots.Count);
+                    foreach (var lot in associatedLots)
+                    {
+                        // Update Sales Order level fields
+                        lot.VoucherNumber = salesOrderWeb.VoucherNumber;
+                        lot.PartyName = salesOrderWeb.BuyerName;
+                        lot.OtherReference = salesOrderWeb.OtherReference;
+
+                        // Find corresponding item in the updated Sales Order to update item level fields
+                        var matchingItem = salesOrderWeb.Items.FirstOrDefault(item => item.Id == lot.SalesOrderItemId);
+                        if (matchingItem != null)
+                        {
+                            lot.ItemName = matchingItem.ItemName;
+                            lot.YarnCount = matchingItem.YarnCount;
+                            lot.Diameter = matchingItem.Dia;
+                            lot.Gauge = matchingItem.GG;
+                            lot.FabricType = matchingItem.FabricType;
+                            lot.SlitLine = matchingItem.SlitLine;
+                            lot.StitchLength = matchingItem.StitchLength;
+                            lot.Composition = matchingItem.Composition;
+                        }
+                    }
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation("Successfully propagated Sales Order {SalesOrderWebId} updates to associated lots", id);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while propagating Sales Order {SalesOrderWebId} updates to associated lots", id);
+                throw;
+            }
+
             // Load the complete entity with items for mapping
             var completeSalesOrderWeb = await _context.SalesOrdersWeb
                 .Include(sow => sow.Items)

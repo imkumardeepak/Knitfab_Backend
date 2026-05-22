@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AutoMapper;
 using AvyyanBackend.Data;
 using AvyyanBackend.DTOs.ProAllotDto;
 using AvyyanBackend.Models.ProAllot;
@@ -533,29 +533,16 @@ namespace AvyyanBackend.Controllers
 				string fileContent = System.IO.File.ReadAllText(filepath);
 
 				// Get company name from SalesOrderWeb
-				string companyName = "AVYAAN KNITFAB"; // Default company name
+				string companyName = "AVYAAN KNITFAB"; // Default to uppercase company name
 				
 				// Try to get SalesOrderWeb to fetch company name
 				var salesOrderWeb = _context.SalesOrdersWeb
 					.FirstOrDefault(sow => sow.Id == productionAllotment.SalesOrderId);
 				
-				// Use company name from SalesOrderWeb if available and matches "Avyaan Knitfab" (case insensitive)
+				// Use company name from SalesOrderWeb if available
 				if (salesOrderWeb != null && !string.IsNullOrWhiteSpace(salesOrderWeb.CompanyName))
 				{
-					// Check if company name contains "Avyaan Knitfab" (case insensitive)
-					if (salesOrderWeb.CompanyName.IndexOf("Avyaan Knitfab", StringComparison.OrdinalIgnoreCase) >= 0)
-					{
-						companyName = "AVYAAN KNITFAB"; // Print in uppercase
-					}
-					else
-					{
-						companyName = ""; // Don't print any company name
-					}
-				}
-				else
-				{
-					// If no company name found, don't print any company name
-					companyName = "";
+					companyName = salesOrderWeb.CompanyName.ToUpper(); // Print in uppercase
 				}
 
 				// Prepare customer name (split at word boundaries for the two customer fields)
@@ -707,31 +694,16 @@ namespace AvyyanBackend.Controllers
 						string fileContent = System.IO.File.ReadAllText(filepath);
 
 						// Get company name from SalesOrderWeb
-						string companyName = "AVYAAN KNITFAB"; // Default company name
+						string companyName = "AVYAAN KNITFAB"; // Default to uppercase company name
 						
 						// Try to get SalesOrderWeb to fetch company name
 						var salesOrderWeb = _context.SalesOrdersWeb
 							.FirstOrDefault(sow => sow.Id == productionAllotment.SalesOrderId);
 						
-
-						
-						// Use company name from SalesOrderWeb if available and matches "Avyaan Knitfab" (case insensitive)
+						// Use company name from SalesOrderWeb if available
 						if (salesOrderWeb != null && !string.IsNullOrWhiteSpace(salesOrderWeb.CompanyName))
 						{
-							// Check if company name contains "Avyaan Knitfab" (case insensitive)
-							if (salesOrderWeb.CompanyName.IndexOf("Avyaan Knitfab", StringComparison.OrdinalIgnoreCase) >= 0)
-							{
-								companyName = "AVYAAN KNITFAB"; // Print in uppercase
-							}
-							else
-							{
-								companyName = ""; // Don't print any company name
-							}
-						}
-						else
-						{
-							// If no company name found, don't print any company name
-							companyName = "";
+							companyName = salesOrderWeb.CompanyName.ToUpper(); // Print in uppercase
 						}
 
 						// Prepare customer name (split at word boundaries for the two customer fields)
@@ -1934,22 +1906,30 @@ namespace AvyyanBackend.Controllers
 								Composition = pa.Composition,
 								Diameter = pa.Diameter,
 								Gauge = pa.Gauge,
-								MachineAllocations = pa.MachineAllocations.Select(ma => new MachineAllocationResponseDto
-								{
-									Id = ma.Id,
-									ProductionAllotmentId = ma.ProductionAllotmentId,
-									MachineName = ma.MachineName,
-									MachineId = ma.MachineId,
-									NumberOfNeedles = ma.NumberOfNeedles,
-									Feeders = ma.Feeders,
-									RPM = ma.RPM,
-									RollPerKg = ma.RollPerKg,
-									TotalLoadWeight = ma.TotalLoadWeight,
-									TotalRolls = ma.TotalRolls,
-									RollBreakdown = !string.IsNullOrEmpty(ma.RollBreakdown)
-										? System.Text.Json.JsonSerializer.Deserialize<DTOs.ProAllotDto.RollBreakdown>(ma.RollBreakdown)
-										: new DTOs.ProAllotDto.RollBreakdown(),
-									EstimatedProductionTime = ma.EstimatedProductionTime
+								MachineAllocations = pa.MachineAllocations.Select(ma => {
+									var maConfirmations = rollConfirmations
+										.Where(rc => rc.AllotId == pa.AllotmentId && rc.MachineName == ma.MachineName)
+										.ToList();
+									return new MachineAllocationResponseDto
+									{
+										Id = ma.Id,
+										ProductionAllotmentId = ma.ProductionAllotmentId,
+										MachineName = ma.MachineName,
+										MachineId = ma.MachineId,
+										NumberOfNeedles = ma.NumberOfNeedles,
+										Feeders = ma.Feeders,
+										RPM = ma.RPM,
+										RollPerKg = ma.RollPerKg,
+										TotalLoadWeight = ma.TotalLoadWeight,
+										TotalRolls = ma.TotalRolls,
+										RollBreakdown = !string.IsNullOrEmpty(ma.RollBreakdown)
+											? System.Text.Json.JsonSerializer.Deserialize<DTOs.ProAllotDto.RollBreakdown>(ma.RollBreakdown)
+											: new DTOs.ProAllotDto.RollBreakdown(),
+										EstimatedProductionTime = ma.EstimatedProductionTime,
+										ConfirmedWeight = maConfirmations.Sum(rc => rc.NetWeight ?? 0m),
+										ConfirmedRolls = maConfirmations.Count,
+										FgStickers = maConfirmations.Count(rc => rc.IsFGStickerGenerated)
+									};
 								}).ToList()
 							};
 						}).ToList();
@@ -1985,8 +1965,8 @@ namespace AvyyanBackend.Controllers
 		}
 
 		// PUT api/productionallotment/{id}/update-quantity
-		// Updates a lot's quantity with validation (min = created roll net weight)
-		// Recalculates machine allocations based on per-roll-kg
+		// Updates a lot's quantity with validation (min = per-machine created roll net weight)
+		// Recalculates machine allocations with roll-confirmation-aware redistribution
 		[HttpPut("{id}/update-quantity")]
 		public async Task<ActionResult<object>> UpdateLotQuantity(int id, [FromBody] UpdateLotQuantityRequest request)
 		{
@@ -2001,23 +1981,24 @@ namespace AvyyanBackend.Controllers
 					return NotFound($"Production allotment with ID {id} not found.");
 				}
 
-				// Get created roll net weight for validation
+				// Get ALL roll confirmations for this lot
 				var rollConfirmations = await _context.RollConfirmations
 					.Where(rc => rc.AllotId == productionAllotment.AllotmentId)
 					.ToListAsync();
 
 				var createdRollNetWeight = rollConfirmations.Sum(rc => rc.NetWeight ?? 0m);
 
-				// Validation: Cannot reduce below created roll net weight
-				if (request.NewQuantity < createdRollNetWeight)
-				{
-					return BadRequest(new
-					{
-						Message = $"Cannot reduce quantity below created roll net weight ({createdRollNetWeight:F3} kg). Total net weight of {rollConfirmations.Count} created rolls is {createdRollNetWeight:F3} kg.",
-						CreatedRollNetWeight = createdRollNetWeight,
-						CreatedRollCount = rollConfirmations.Count
-					});
-				}
+				// Build per-machine confirmed roll stats
+				var perMachineStats = rollConfirmations
+					.GroupBy(rc => rc.MachineName)
+					.ToDictionary(
+						g => g.Key,
+						g => new {
+							ConfirmedWeight = g.Sum(rc => rc.NetWeight ?? 0m),
+							ConfirmedRollCount = g.Count(),
+							FgStickerCount = g.Count(rc => rc.IsFGStickerGenerated)
+						}
+					);
 
 				// Validation: Quantity must be positive
 				if (request.NewQuantity <= 0)
@@ -2025,39 +2006,78 @@ namespace AvyyanBackend.Controllers
 					return BadRequest("Quantity must be greater than zero.");
 				}
 
+				// Validation: Cannot reduce below total created roll net weight
+				if (request.NewQuantity < createdRollNetWeight)
+				{
+					var machineBreakdown = perMachineStats.Select(kvp => new {
+						MachineName = kvp.Key,
+						ConfirmedWeight = kvp.Value.ConfirmedWeight,
+						ConfirmedRolls = kvp.Value.ConfirmedRollCount,
+						FgStickers = kvp.Value.FgStickerCount
+					}).ToList();
+
+					return BadRequest(new
+					{
+						Message = $"Cannot reduce quantity below created roll net weight ({createdRollNetWeight:F3} kg). Total net weight of {rollConfirmations.Count} created rolls across {perMachineStats.Count} machines is {createdRollNetWeight:F3} kg.",
+						CreatedRollNetWeight = createdRollNetWeight,
+						CreatedRollCount = rollConfirmations.Count,
+						MachineBreakdown = machineBreakdown
+					});
+				}
+
 				var oldQuantity = productionAllotment.ActualQuantity;
 				productionAllotment.ActualQuantity = request.NewQuantity;
 
-				RecalculateMachineAllocationsForQuantity(productionAllotment, request.NewQuantity);
+				// Build per-machine confirmed weight dictionary for smart redistribution
+				var machineConfirmedWeights = perMachineStats.ToDictionary(
+					kvp => kvp.Key,
+					kvp => kvp.Value.ConfirmedWeight
+				);
+
+				RecalculateMachineAllocationsForQuantity(productionAllotment, request.NewQuantity, machineConfirmedWeights);
 
 				await _context.SaveChangesAsync();
 
-				// Return updated data
+				// Return updated data with per-machine breakdown
 				return Ok(new
 				{
 					Success = true,
-					Message = $"Lot quantity updated from {oldQuantity:F3} to {request.NewQuantity:F3} kg",
+					Message = $"Lot quantity updated from {oldQuantity:F3} to {request.NewQuantity:F3} kg. Machine loads redistributed respecting {rollConfirmations.Count} confirmed rolls.",
 					Id = productionAllotment.Id,
 					AllotmentId = productionAllotment.AllotmentId,
 					OldQuantity = oldQuantity,
 					NewQuantity = request.NewQuantity,
 					CreatedRollNetWeight = createdRollNetWeight,
-					MachineAllocations = productionAllotment.MachineAllocations?.Select(ma => new MachineAllocationResponseDto
-					{
-						Id = ma.Id,
-						ProductionAllotmentId = ma.ProductionAllotmentId,
-						MachineName = ma.MachineName,
-						MachineId = ma.MachineId,
-						NumberOfNeedles = ma.NumberOfNeedles,
-						Feeders = ma.Feeders,
-						RPM = ma.RPM,
-						RollPerKg = ma.RollPerKg,
-						TotalLoadWeight = ma.TotalLoadWeight,
-						TotalRolls = ma.TotalRolls,
-						RollBreakdown = !string.IsNullOrEmpty(ma.RollBreakdown)
-							? System.Text.Json.JsonSerializer.Deserialize<DTOs.ProAllotDto.RollBreakdown>(ma.RollBreakdown)
-							: new DTOs.ProAllotDto.RollBreakdown(),
-						EstimatedProductionTime = ma.EstimatedProductionTime
+					MachineBreakdown = perMachineStats.Select(kvp => new {
+						MachineName = kvp.Key,
+						ConfirmedWeight = kvp.Value.ConfirmedWeight,
+						ConfirmedRolls = kvp.Value.ConfirmedRollCount,
+						FgStickers = kvp.Value.FgStickerCount
+					}).ToList(),
+					MachineAllocations = productionAllotment.MachineAllocations?.Select(ma => {
+						var maConfirmations = rollConfirmations
+							.Where(rc => rc.AllotId == productionAllotment.AllotmentId && rc.MachineName == ma.MachineName)
+							.ToList();
+						return new MachineAllocationResponseDto
+						{
+							Id = ma.Id,
+							ProductionAllotmentId = ma.ProductionAllotmentId,
+							MachineName = ma.MachineName,
+							MachineId = ma.MachineId,
+							NumberOfNeedles = ma.NumberOfNeedles,
+							Feeders = ma.Feeders,
+							RPM = ma.RPM,
+							RollPerKg = ma.RollPerKg,
+							TotalLoadWeight = ma.TotalLoadWeight,
+							TotalRolls = ma.TotalRolls,
+							RollBreakdown = !string.IsNullOrEmpty(ma.RollBreakdown)
+								? System.Text.Json.JsonSerializer.Deserialize<DTOs.ProAllotDto.RollBreakdown>(ma.RollBreakdown)
+								: new DTOs.ProAllotDto.RollBreakdown(),
+							EstimatedProductionTime = ma.EstimatedProductionTime,
+							ConfirmedWeight = maConfirmations.Sum(rc => rc.NetWeight ?? 0m),
+							ConfirmedRolls = maConfirmations.Count,
+							FgStickers = maConfirmations.Count(rc => rc.IsFGStickerGenerated)
+						};
 					}).ToList()
 				});
 			}
@@ -2134,42 +2154,153 @@ namespace AvyyanBackend.Controllers
 
 		private void RecalculateMachineAllocationsForQuantity(ProductionAllotment productionAllotment, decimal targetQuantity)
 		{
+			// Backward-compatible overload: no per-machine roll stats → use simple ratio
+			RecalculateMachineAllocationsForQuantity(productionAllotment, targetQuantity, null);
+		}
+
+		private void RecalculateMachineAllocationsForQuantity(
+			ProductionAllotment productionAllotment,
+			decimal targetQuantity,
+			Dictionary<string, decimal> machineConfirmedWeights)
+		{
 			if (productionAllotment.MachineAllocations == null || !productionAllotment.MachineAllocations.Any())
 			{
 				productionAllotment.TotalProductionTime = 0;
 				return;
 			}
 
-			var totalExistingLoad = productionAllotment.MachineAllocations.Sum(ma => ma.TotalLoadWeight);
-			var ratio = totalExistingLoad > 0 ? targetQuantity / totalExistingLoad : 1m;
-
-			foreach (var machineAllocation in productionAllotment.MachineAllocations)
+			// If no per-machine roll data is provided, fall back to simple ratio
+			if (machineConfirmedWeights == null || !machineConfirmedWeights.Any())
 			{
-				machineAllocation.TotalLoadWeight = Math.Round(machineAllocation.TotalLoadWeight * ratio, 3);
-				machineAllocation.EstimatedProductionTime = Math.Round(machineAllocation.EstimatedProductionTime * ratio, 2);
+				var totalExistingLoad = productionAllotment.MachineAllocations.Sum(ma => ma.TotalLoadWeight);
+				var ratio = totalExistingLoad > 0 ? targetQuantity / totalExistingLoad : 1m;
 
-				if (machineAllocation.RollPerKg > 0)
+				foreach (var ma in productionAllotment.MachineAllocations)
 				{
-					var exactTotalRolls = machineAllocation.TotalLoadWeight / machineAllocation.RollPerKg;
-					machineAllocation.TotalRolls = Math.Ceiling(exactTotalRolls);
-					machineAllocation.RollBreakdown = System.Text.Json.JsonSerializer.Serialize(
-						BuildRollBreakdown(exactTotalRolls, machineAllocation.RollPerKg)
-					);
+					ma.TotalLoadWeight = Math.Round(ma.TotalLoadWeight * ratio, 3);
+					ma.EstimatedProductionTime = Math.Round(ma.EstimatedProductionTime * ratio, 2);
+					RecalculateRollBreakdownForMachine(ma);
+				}
+
+				productionAllotment.TotalProductionTime = productionAllotment.MachineAllocations.Sum(ma => ma.EstimatedProductionTime);
+				return;
+			}
+
+			// ── Smart redistribution: respect per-machine confirmed roll weights ──
+
+			// Step 1: Calculate the locked (minimum) weight per machine
+			var lockedTotal = 0m;
+			var unlocked = new List<MachineAllocation>();
+			var totalOriginalUnlockedLoad = 0m;
+
+			foreach (var ma in productionAllotment.MachineAllocations)
+			{
+				var confirmedWeight = machineConfirmedWeights.ContainsKey(ma.MachineName)
+					? machineConfirmedWeights[ma.MachineName]
+					: 0m;
+
+				if (confirmedWeight > 0)
+				{
+					// This machine has confirmed rolls — lock it at least at the confirmed weight
+					var newLoad = Math.Max(confirmedWeight, 0m);
+					ma.TotalLoadWeight = Math.Round(newLoad, 3);
+					lockedTotal += newLoad;
 				}
 				else
 				{
-					machineAllocation.TotalRolls = 0;
-					machineAllocation.RollBreakdown = System.Text.Json.JsonSerializer.Serialize(
-						new DTOs.ProAllotDto.RollBreakdown
-						{
-							WholeRolls = new List<DTOs.ProAllotDto.RollItem>(),
-							FractionalRoll = null
-						}
-					);
+					// No confirmed rolls — this machine can be freely redistributed
+					totalOriginalUnlockedLoad += ma.TotalLoadWeight;
+					unlocked.Add(ma);
 				}
 			}
 
+			// Step 2: Calculate remaining quantity to distribute across unlocked machines
+			var remainingQty = targetQuantity - lockedTotal;
+
+			if (remainingQty < 0)
+			{
+				// Target is less than locked total — shouldn't happen if validation passed,
+				// but guard against it: set unlocked machines to 0
+				remainingQty = 0;
+			}
+
+			// Step 3: Distribute remaining quantity across unlocked machines
+			if (unlocked.Count > 0 && remainingQty > 0)
+			{
+				if (totalOriginalUnlockedLoad > 0)
+				{
+					// Distribute proportionally based on original load ratios
+					var unlockedRatio = remainingQty / totalOriginalUnlockedLoad;
+					foreach (var ma in unlocked)
+					{
+						ma.TotalLoadWeight = Math.Round(ma.TotalLoadWeight * unlockedRatio, 3);
+					}
+				}
+				else
+				{
+					// All unlocked machines had 0 load — distribute equally
+					var perMachine = Math.Round(remainingQty / unlocked.Count, 3);
+					foreach (var ma in unlocked)
+					{
+						ma.TotalLoadWeight = perMachine;
+					}
+				}
+			}
+			else if (unlocked.Count > 0 && remainingQty <= 0)
+			{
+				// No remaining quantity — zero out unlocked machines
+				foreach (var ma in unlocked)
+				{
+					ma.TotalLoadWeight = 0;
+				}
+			}
+
+			// Step 4: Recalculate rolls and production time for ALL machines
+			var totalExistingTime = productionAllotment.MachineAllocations.Sum(ma => ma.EstimatedProductionTime);
+			var totalExistingWeight = productionAllotment.MachineAllocations.Sum(ma => ma.TotalLoadWeight);
+
+			foreach (var ma in productionAllotment.MachineAllocations)
+			{
+				// Recalculate estimated production time proportionally
+				if (totalExistingWeight > 0)
+				{
+					ma.EstimatedProductionTime = Math.Round((ma.TotalLoadWeight / totalExistingWeight) * totalExistingTime, 2);
+				}
+				else
+				{
+					ma.EstimatedProductionTime = 0;
+				}
+
+				RecalculateRollBreakdownForMachine(ma);
+			}
+
 			productionAllotment.TotalProductionTime = productionAllotment.MachineAllocations.Sum(ma => ma.EstimatedProductionTime);
+		}
+
+		/// <summary>
+		/// Recalculates the roll breakdown (whole rolls + fractional) for a single machine allocation.
+		/// </summary>
+		private void RecalculateRollBreakdownForMachine(MachineAllocation machineAllocation)
+		{
+			if (machineAllocation.RollPerKg > 0)
+			{
+				var exactTotalRolls = machineAllocation.TotalLoadWeight / machineAllocation.RollPerKg;
+				machineAllocation.TotalRolls = Math.Ceiling(exactTotalRolls);
+				machineAllocation.RollBreakdown = System.Text.Json.JsonSerializer.Serialize(
+					BuildRollBreakdown(exactTotalRolls, machineAllocation.RollPerKg)
+				);
+			}
+			else
+			{
+				machineAllocation.TotalRolls = 0;
+				machineAllocation.RollBreakdown = System.Text.Json.JsonSerializer.Serialize(
+					new DTOs.ProAllotDto.RollBreakdown
+					{
+						WholeRolls = new List<DTOs.ProAllotDto.RollItem>(),
+						FractionalRoll = null
+					}
+				);
+			}
 		}
 
 		private DTOs.ProAllotDto.RollBreakdown BuildRollBreakdown(decimal exactTotalRolls, decimal rollPerKg)
@@ -2208,4 +2339,5 @@ namespace AvyyanBackend.Controllers
 
 	}
 }
+
 
