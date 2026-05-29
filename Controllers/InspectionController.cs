@@ -35,7 +35,10 @@ namespace AvyyanBackend.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                if (!request.Flag && string.IsNullOrWhiteSpace(request.Remarks))
+                if (request.Status == InspectionStatus.Accepted && string.IsNullOrWhiteSpace(request.Grade))
+                    return BadRequest("Grade is required when accepting a roll.");
+
+                if (request.Status == InspectionStatus.Rejected && string.IsNullOrWhiteSpace(request.Remarks))
                     return BadRequest("Remarks are required when rejecting a roll.");
 
                 var existingInspection = await _context.Inspections
@@ -80,7 +83,7 @@ namespace AvyyanBackend.Controllers
                     TotalFaults = request.TotalFaults,
                     Remarks = request.Remarks,
                     CreatedDate = request.CreatedDate,
-                    Flag = request.Flag
+                    Status = request.Status
                 };
 
                 _context.Inspections.Add(inspection);
@@ -113,18 +116,22 @@ namespace AvyyanBackend.Controllers
                     TotalFaults = inspection.TotalFaults,
                     Remarks = inspection.Remarks,
                     CreatedDate = inspection.CreatedDate,
-                    Flag = inspection.Flag
+                    Status = inspection.Status
                 };
 
                 await _auditLogService.LogAsync(
-                    action: inspection.Flag ? "PASS" : "REJECT",
+                    action: $"INSPECTION_{inspection.Status.ToString().ToUpperInvariant()}",
                     module: "Inspection",
                     entityId: inspection.Id,
                     entityName: inspection.AllotId,
-                    changeSummary: inspection.Flag
-                        ? $"Roll #{inspection.RollNo} PASSED inspection in Allot {inspection.AllotId} — Grade: {inspection.Grade}, Faults: {inspection.TotalFaults}"
-                        : $"Roll #{inspection.RollNo} REJECTED in Allot {inspection.AllotId} — Reason: {inspection.Remarks}",
-                    newValues: new { inspection.AllotId, inspection.MachineName, inspection.RollNo, inspection.Grade, inspection.TotalFaults, inspection.Flag, inspection.Remarks }
+                    changeSummary: inspection.Status switch
+                    {
+                        InspectionStatus.Accepted => $"Roll #{inspection.RollNo} ACCEPTED in Allot {inspection.AllotId} - Grade: {inspection.Grade}, Faults: {inspection.TotalFaults}",
+                        InspectionStatus.Rejected => $"Roll #{inspection.RollNo} REJECTED in Allot {inspection.AllotId} - Reason: {inspection.Remarks}",
+                        InspectionStatus.Hold => $"Roll #{inspection.RollNo} HELD in Allot {inspection.AllotId} - Remarks: {inspection.Remarks}",
+                        _ => $"Roll #{inspection.RollNo} inspection updated in Allot {inspection.AllotId}"
+                    },
+                    newValues: new { inspection.AllotId, inspection.MachineName, inspection.RollNo, inspection.Grade, inspection.TotalFaults, inspection.Status, inspection.Remarks }
                 );
 
                 return Ok(responseDto);
@@ -174,7 +181,7 @@ namespace AvyyanBackend.Controllers
                     TotalFaults = inspection.TotalFaults,
                     Remarks = inspection.Remarks,
                     CreatedDate = inspection.CreatedDate,
-                    Flag = inspection.Flag
+                    Status = inspection.Status
                 };
 
                 return Ok(responseDto);
@@ -223,7 +230,7 @@ namespace AvyyanBackend.Controllers
                     TotalFaults = inspection.TotalFaults,
                     Remarks = inspection.Remarks,
                     CreatedDate = inspection.CreatedDate,
-                    Flag = inspection.Flag
+                    Status = inspection.Status
                 }).ToList();
 
                 return Ok(responseDtos);

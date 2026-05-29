@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using AvyyanBackend.Models.ProductionConfirmation;
 
 namespace AvyyanBackend.DTOs.ProductionConfirmation
 {
@@ -41,7 +42,6 @@ namespace AvyyanBackend.DTOs.ProductionConfirmation
         public int VerticalLines { get; set; }
 
         // Summary
-        [Required]
         [MaxLength(10)]
         public string Grade { get; set; } = string.Empty;
 
@@ -52,8 +52,8 @@ namespace AvyyanBackend.DTOs.ProductionConfirmation
 
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         
-        // Flag for approval status (true = approved, false = rejected)
-        public bool Flag { get; set; } = true; // Default to approved
+        [Required]
+        public InspectionStatus Status { get; set; } = InspectionStatus.Accepted;
     }
 
     public class InspectionResponseDto
@@ -92,7 +92,6 @@ namespace AvyyanBackend.DTOs.ProductionConfirmation
         public string Remarks { get; set; } = string.Empty;
         public DateTime CreatedDate { get; set; }
         
-        // Flag for approval status (true = approved, false = rejected)
-        public bool Flag { get; set; }
+        public InspectionStatus Status { get; set; }
     }
 }

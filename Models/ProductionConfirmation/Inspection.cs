@@ -41,7 +41,6 @@ namespace AvyyanBackend.Models.ProductionConfirmation
         public int VerticalLines { get; set; }
 
         // Summary
-        [Required]
         [MaxLength(10)]
         public string Grade { get; set; } = string.Empty;
 
@@ -52,7 +51,7 @@ namespace AvyyanBackend.Models.ProductionConfirmation
         
         public DateTime CreatedDate { get; internal set; }
         
-        // Flag for approval status (true = approved, false = rejected)
-        public bool Flag { get; set; } = true; // Default to approved
+        // Inspection status for the roll at this machine
+        public InspectionStatus Status { get; set; } = InspectionStatus.Accepted;
     }
 }

@@ -108,7 +108,7 @@ if (app.Environment.IsDevelopment())
 {
 	using var scope = app.Services.CreateScope();
 	var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-	// await context.Database.MigrateAsync();
+	await context.Database.MigrateAsync();
 
 	// Seed initial data
 	//var dataSeedService = scope.ServiceProvider.GetRequiredService<DataSeedService>();
