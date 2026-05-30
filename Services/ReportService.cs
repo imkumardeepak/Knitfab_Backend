@@ -68,6 +68,7 @@ namespace AvyyanBackend.Services
                     VoucherNumber = so.VoucherNumber,
                     BuyerName = so.BuyerName,
                     OrderDate = so.OrderDate,
+                    IsProcess = so.IsProcess,
                     SalesOrderItems = new List<SalesOrderItemReportDto>()
                 };
 
@@ -90,6 +91,7 @@ namespace AvyyanBackend.Services
                         GG = item.GG,
                         FabricType = item.FabricType,
                         Qty = item.Qty,
+                        IsProcess = item.IsProcess,
                         ProductionAllotments = new List<ProductionAllotmentReportDto>()
                     };
 
@@ -128,6 +130,7 @@ namespace AvyyanBackend.Services
                             GG = pa.Gauge,
                             FabricType = pa.FabricType,
                             Qty = pa.ActualQuantity,
+                            IsProcess = so.IsProcess, // Use order-level IsProcess as fallback for orphans
                             ProductionAllotments = new List<ProductionAllotmentReportDto> { MapAllotmentToReport(pa, rcLookup, dpLookup) }
                         };
                         report.SalesOrderItems.Add(orphanItem);
@@ -154,6 +157,8 @@ namespace AvyyanBackend.Services
                 YarnPartyName = pa.YarnPartyName,
                 YarnLotNo = pa.YarnLotNo,
                 ActualQuantity = pa.ActualQuantity,
+                IsOnHold = pa.ProductionStatus == 1,
+                IsSuspended = pa.ProductionStatus == 2,
                 TotalRunningMachines = pa.MachineAllocations?.Count ?? 0,
                 MachineAllocations = pa.MachineAllocations?.Select(ma => new MachineAllocationReportDto
                 {
@@ -162,7 +167,9 @@ namespace AvyyanBackend.Services
                     NumberOfNeedles = ma.NumberOfNeedles,
                     Feeders = ma.Feeders,
                     RPM = ma.RPM,
-                    TotalRolls = (int)ma.TotalRolls
+                    TotalRolls = (int)ma.TotalRolls,
+                    TotalLoadWeight = ma.TotalLoadWeight,
+                    EstimatedProductionTime = ma.EstimatedProductionTime
                 }).ToList() ?? new List<MachineAllocationReportDto>()
             };
 

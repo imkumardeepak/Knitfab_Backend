@@ -10,6 +10,7 @@ namespace AvyyanBackend.DTOs.Report
         public string VoucherNumber { get; set; }
         public string BuyerName { get; set; }
         public DateTime OrderDate { get; set; }
+        public bool IsProcess { get; set; }
         
         // Sales Order Item Information
         public List<SalesOrderItemReportDto> SalesOrderItems { get; set; } = new List<SalesOrderItemReportDto>();
@@ -24,6 +25,7 @@ namespace AvyyanBackend.DTOs.Report
         public int GG { get; set; }
         public string FabricType { get; set; }
         public decimal Qty { get; set; }
+        public bool IsProcess { get; set; }
         
         // Production Allotment Information
         public List<ProductionAllotmentReportDto> ProductionAllotments { get; set; } = new List<ProductionAllotmentReportDto>();
@@ -41,6 +43,10 @@ namespace AvyyanBackend.DTOs.Report
         public string YarnPartyName { get; set; }
         public string YarnLotNo { get; set; }
         public decimal ActualQuantity { get; set; }
+        
+        // Production Status Fields
+        public bool IsOnHold { get; set; }
+        public bool IsSuspended { get; set; }
         
         // Machine Allocation Information
         public int TotalRunningMachines { get; set; }
@@ -64,7 +70,9 @@ namespace AvyyanBackend.DTOs.Report
         public int NumberOfNeedles { get; set; }
         public int Feeders { get; set; }
         public decimal RPM { get; set; }
-        public decimal TotalRolls { get; set; }
+        public int TotalRolls { get; set; }
+        public decimal TotalLoadWeight { get; set; }
+        public decimal EstimatedProductionTime { get; set; }
     }
 
     public class RollConfirmationReportDto
